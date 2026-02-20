@@ -1,0 +1,67 @@
+#################################################
+# ================= BACKEND =====================
+#################################################
+
+# Spring Boot
+HELP.md
+target/
+.mvn/wrapper/maven-wrapper.jar
+
+# IDE
+.idea/
+*.iws
+*.iml
+*.ipr
+.classpath
+.project
+.settings/
+.springBeans
+.sts4-cache
+
+#################################################
+# ================= FRONTEND ====================
+#################################################
+
+# dependencies
+frontend/node_modules/
+frontend/.pnp
+frontend/.pnp.*
+frontend/.yarn/*
+!frontend/.yarn/patches
+!frontend/.yarn/plugins
+!frontend/.yarn/releases
+!frontend/.yarn/versions
+
+# next.js
+frontend/.next/
+frontend/out/
+frontend/build/
+
+# testing
+frontend/coverage/
+
+# env files
+frontend/.env*
+.env*
+
+# vercel
+frontend/.vercel
+
+# debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# typescript
+frontend/*.tsbuildinfo
+frontend/next-env.d.ts
+
+#################################################
+# ================= GENERAL =====================
+#################################################
+
+.DS_Store
+.vscode/
+*.log
+*.pem
