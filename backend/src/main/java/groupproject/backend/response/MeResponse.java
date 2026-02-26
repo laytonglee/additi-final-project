@@ -30,6 +30,15 @@ public class MeResponse {
     private String bio;
 
     @Nullable
+    private String themeColor;
+
+    @Nullable
+    private String backgroundColor;
+
+    @Nullable
+    private String buttonStyle;
+
+    @Nullable
     private Set<String> roles;
 
 }

@@ -54,25 +54,19 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/profile").authenticated()
                         .requestMatchers("/api/auth/**").permitAll()
 
-                        // User registration
-                        .requestMatchers("/api/users/register").permitAll()
+                        // Public profile endpoints (no auth required)
+                        .requestMatchers("/api/public/**").permitAll()
 
-                        // Products — specific admin rules first, then public GET
-                        .requestMatchers(HttpMethod.GET, "/api/products/dashboard").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/products/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/products/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/products/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
+                        // Link management (authenticated)
+                        .requestMatchers("/api/links/**").authenticated()
 
-                        // Categories — specific admin rules first, then public GET
-                        .requestMatchers(HttpMethod.POST, "/api/categories/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/categories/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/categories/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
+                        // Analytics (authenticated)
+                        .requestMatchers("/api/analytics/**").authenticated()
+
+                        // AI endpoints (authenticated)
+                        .requestMatchers("/api/ai/**").authenticated()
 
                         // Admin area
-                        .requestMatchers(HttpMethod.GET, "/api/users/**").hasRole("ADMIN")
-                        .requestMatchers("/dashboard").hasRole("ADMIN")
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
                         .anyRequest().authenticated()
@@ -99,10 +93,11 @@ public class SecurityConfig {
 
 
     @Bean
-    public AuthenticationProvider authenticationProvider (){
-        DaoAuthenticationProvider daoAuthenticationProvider = new DaoAuthenticationProvider(userDetailsService);
-        daoAuthenticationProvider.setPasswordEncoder(passwordEncoder());
-        return daoAuthenticationProvider;
+    public AuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+        provider.setUserDetailsService(userDetailsService);
+        provider.setPasswordEncoder(passwordEncoder());
+        return provider;
     }
 
 

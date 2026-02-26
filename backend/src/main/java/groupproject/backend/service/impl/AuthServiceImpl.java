@@ -159,6 +159,9 @@ public class AuthServiceImpl implements AuthService {
         res.setPhoneNumber(user.getPhoneNumber());
         res.setAddress(user.getAddress());
         res.setBio(user.getBio());
+        res.setThemeColor(user.getThemeColor());
+        res.setBackgroundColor(user.getBackgroundColor());
+        res.setButtonStyle(user.getButtonStyle());
         res.setRoles(
                 user.getRoles()
                         .stream()
@@ -235,6 +238,15 @@ public class AuthServiceImpl implements AuthService {
         if (request.getPhoto() != null) {
             user.setPhoto(request.getPhoto());
         }
+        if (request.getThemeColor() != null) {
+            user.setThemeColor(request.getThemeColor());
+        }
+        if (request.getBackgroundColor() != null) {
+            user.setBackgroundColor(request.getBackgroundColor());
+        }
+        if (request.getButtonStyle() != null) {
+            user.setButtonStyle(request.getButtonStyle());
+        }
 
         userRepository.save(user);
 
@@ -245,6 +257,9 @@ public class AuthServiceImpl implements AuthService {
         data.setPhoneNumber(user.getPhoneNumber());
         data.setAddress(user.getAddress());
         data.setBio(user.getBio());
+        data.setThemeColor(user.getThemeColor());
+        data.setBackgroundColor(user.getBackgroundColor());
+        data.setButtonStyle(user.getButtonStyle());
         data.setRoles(
                 user.getRoles()
                         .stream()

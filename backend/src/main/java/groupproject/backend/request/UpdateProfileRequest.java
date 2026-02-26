@@ -18,5 +18,9 @@ public class UpdateProfileRequest {
 
     private String photo;
 
+    private String themeColor;
+    private String backgroundColor;
+    private String buttonStyle;
+
 }
 

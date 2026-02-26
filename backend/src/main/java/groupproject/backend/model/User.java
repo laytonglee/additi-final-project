@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import lombok.Getter;
 import lombok.Setter;
-import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -24,13 +23,12 @@ public class User implements UserDetails {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String username;
 
     @Email
     @Column(nullable = false, unique = true)
     private String email;
-
 
     @Column(nullable = false)
     private String password;
@@ -39,7 +37,6 @@ public class User implements UserDetails {
     private boolean enable = true;
 
     private String phoneNumber;
-
     private String address;
 
     @Column(length = 500)
@@ -47,31 +44,68 @@ public class User implements UserDetails {
 
     private String photo;
 
+    @Column(length = 20)
+    private String themeColor = "violet";
+
+    @Column(length = 50)
+    private String backgroundColor = "gradient-violet";
+
+    @Column(length = 20)
+    private String buttonStyle = "rounded";
+
     @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(name = "user_role", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
+    @JoinTable(
+            name = "user_role",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
     private Set<Role> roles;
+
+    // ==============================
+    // Spring Security Methods
+    // ==============================
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         List<GrantedAuthority> authorities = new ArrayList<>();
-        for (Role role: roles) {
+        for (Role role : roles) {
             authorities.add(new SimpleGrantedAuthority("ROLE_" + role.getName()));
         }
         return authorities;
     }
 
     @Override
-    public @Nullable String getPassword() {
+    public String getPassword() {
         return this.password;
     }
 
     @Override
     public String getUsername() {
-        return this.email;
+        return this.email; // login using email
     }
 
-    public String getRealUsername(){
+    public String getRealUsername() {
         return this.username;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return this.enable;
     }
 }
 
