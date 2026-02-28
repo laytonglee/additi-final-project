@@ -49,22 +49,40 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/error").permitAll()
 
-                        // Auth endpoints — specific rules first, then wildcard
+                        // Auth endpoints — specific rules first
                         .requestMatchers("/api/auth/me").authenticated()
                         .requestMatchers("/api/auth/profile").authenticated()
                         .requestMatchers("/api/auth/**").permitAll()
 
-                        // Public profile endpoints (no auth required)
-                        .requestMatchers("/api/public/**").permitAll()
+                        // Public project browsing (GET only)
+                        .requestMatchers(HttpMethod.GET, "/api/projects").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/projects/search").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/projects/{id}").permitAll()
 
-                        // Link management (authenticated)
-                        .requestMatchers("/api/links/**").authenticated()
+                        // Public user profile & reviews
+                        .requestMatchers(HttpMethod.GET, "/api/users/{id}/profile").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/users/{id}/reviews").permitAll()
 
-                        // Analytics (authenticated)
-                        .requestMatchers("/api/analytics/**").authenticated()
+                        // Proposals (authenticated)
+                        .requestMatchers("/api/projects/*/proposals").authenticated()
+                        .requestMatchers("/api/proposals/**").authenticated()
 
-                        // AI endpoints (authenticated)
-                        .requestMatchers("/api/ai/**").authenticated()
+                        // Contracts (authenticated)
+                        .requestMatchers("/api/contracts/**").authenticated()
+
+                        // Reviews (authenticated for create/reply)
+                        .requestMatchers(HttpMethod.POST, "/api/contracts/*/review").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/reviews/*/reply").authenticated()
+
+                        // Messages (authenticated)
+                        .requestMatchers("/api/messages/**").authenticated()
+                        .requestMatchers("/api/messages/conversations").authenticated()
+
+                        // Notifications (authenticated)
+                        .requestMatchers("/api/notifications/**").authenticated()
+
+                        // File upload (authenticated)
+                        .requestMatchers("/api/upload/**").authenticated()
 
                         // Admin area
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")

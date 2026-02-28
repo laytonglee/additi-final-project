@@ -4,10 +4,12 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -23,11 +25,11 @@ public class User implements UserDetails {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
-    private String username;
+    @Column(nullable = false, length = 100)
+    private String name;
 
     @Email
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, unique = true, length = 150)
     private String email;
 
     @Column(nullable = false)
@@ -36,22 +38,33 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private boolean enable = true;
 
-    private String phoneNumber;
-    private String address;
-
-    @Column(length = 500)
+    @Column(columnDefinition = "TEXT")
     private String bio;
 
-    private String photo;
+    @Column(length = 255)
+    private String skills;
 
-    @Column(length = 20)
-    private String themeColor = "violet";
+    @Column(name = "avatar_url", length = 255)
+    private String avatarUrl;
 
-    @Column(length = 50)
-    private String backgroundColor = "gradient-violet";
+    @Column(name = "is_banned", nullable = false)
+    private boolean isBanned = false;
 
-    @Column(length = 20)
-    private String buttonStyle = "rounded";
+    @Column(name = "is_online", nullable = false)
+    private boolean isOnline = false;
+
+    @Column(name = "last_seen_at")
+    private LocalDateTime lastSeenAt;
+
+    @Column(name = "notif_email", nullable = false)
+    private boolean notifEmail = true;
+
+    @Column(name = "notif_push", nullable = false)
+    private boolean notifPush = true;
+
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
@@ -84,8 +97,8 @@ public class User implements UserDetails {
         return this.email; // login using email
     }
 
-    public String getRealUsername() {
-        return this.username;
+    public String getRealName() {
+        return this.name;
     }
 
     @Override
@@ -95,7 +108,7 @@ public class User implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return true;
+        return !this.isBanned;
     }
 
     @Override

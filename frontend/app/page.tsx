@@ -1,145 +1,225 @@
 "use client";
 
 import Link from "next/link";
-import { useAuth } from "@/context/AuthContext";
+import { useAuthStore } from "@/store/auth";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { FileText, Handshake, CheckCircle, ArrowRight } from "lucide-react";
+import { motion } from "framer-motion";
+import { PageTransition } from "@/components/PageTransition";
+import { AnimatedList, AnimatedItem } from "@/components/AnimatedList";
 
-export default function Home() {
-  const { user, loading } = useAuth();
+const fadeUp = {
+  hidden: { opacity: 0, y: 24 },
+  visible: (delay = 0) => ({
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.5,
+      delay,
+      ease: [0.25, 0.1, 0.25, 1] as [number, number, number, number],
+    },
+  }),
+};
+
+export default function HomePage() {
+  const { user, isClient, isFreelancer } = useAuthStore();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-violet-50 via-white to-indigo-50">
-      {/* Navbar */}
-      <nav className="flex items-center justify-between px-6 py-4 max-w-6xl mx-auto">
-        <Link href="/" className="text-2xl font-bold text-violet-700">
-          🔗 LinkHub
-        </Link>
-        <div className="flex items-center gap-4">
-          {loading ? null : user ? (
-            <Link
-              href="/dashboard"
-              className="px-5 py-2 rounded-lg bg-violet-600 text-white font-medium hover:bg-violet-700 transition"
+    <PageTransition>
+      <div className="min-h-[calc(100vh-3.5rem)]">
+        {/* Hero */}
+        <section className="relative overflow-hidden bg-gradient-to-br from-primary via-primary/90 to-primary/70 text-primary-foreground">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/10 via-transparent to-transparent" />
+          <div className="relative max-w-7xl mx-auto px-4 py-24 sm:py-32 text-center">
+            <motion.h1
+              className="text-4xl sm:text-6xl font-extrabold tracking-tight mb-6"
+              variants={fadeUp}
+              initial="hidden"
+              animate="visible"
+              custom={0}
             >
-              Dashboard
-            </Link>
-          ) : (
-            <>
-              <Link
-                href="/login"
-                className="px-5 py-2 rounded-lg border border-violet-300 text-violet-700 font-medium hover:bg-violet-50 transition"
-              >
-                Sign In
-              </Link>
-              <Link
-                href="/register"
-                className="px-5 py-2 rounded-lg bg-violet-600 text-white font-medium hover:bg-violet-700 transition"
-              >
-                Get Started
-              </Link>
-            </>
-          )}
-        </div>
-      </nav>
-
-      {/* Hero */}
-      <main className="max-w-6xl mx-auto px-6 pt-20 pb-32">
-        <div className="text-center max-w-3xl mx-auto">
-          <h1 className="text-5xl md:text-6xl font-extrabold text-gray-900 leading-tight">
-            All Your Links.
-            <br />
-            <span className="text-violet-600">One Simple Page.</span>
-          </h1>
-          <p className="mt-6 text-lg md:text-xl text-gray-600 max-w-2xl mx-auto">
-            Create a beautiful link page for your social media, shops, and
-            websites. Share one link everywhere and track every click with
-            AI-powered analytics.
-          </p>
-          <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              href="/register"
-              className="px-8 py-3 rounded-xl bg-violet-600 text-white text-lg font-semibold hover:bg-violet-700 transition shadow-lg shadow-violet-200"
+              Connect. Collaborate. Create.
+            </motion.h1>
+            <motion.p
+              className="text-lg sm:text-xl text-primary-foreground/80 max-w-2xl mx-auto mb-10"
+              variants={fadeUp}
+              initial="hidden"
+              animate="visible"
+              custom={0.12}
             >
-              Create Your LinkHub — Free
-            </Link>
+              FreelanceHub brings clients and freelancers together. Post
+              projects, submit proposals, manage contracts, and grow your career
+              — all in one place.
+            </motion.p>
+            <motion.div
+              className="flex flex-col sm:flex-row gap-4 justify-center"
+              variants={fadeUp}
+              initial="hidden"
+              animate="visible"
+              custom={0.24}
+            >
+              {user ? (
+                <>
+                  {isClient() && (
+                    <Button
+                      size="lg"
+                      variant="secondary"
+                      className="font-semibold"
+                      asChild
+                    >
+                      <Link href="/post-project">Post a Project</Link>
+                    </Button>
+                  )}
+                  {isFreelancer() && (
+                    <Button
+                      size="lg"
+                      variant="secondary"
+                      className="font-semibold"
+                      asChild
+                    >
+                      <Link href="/projects">Find Work</Link>
+                    </Button>
+                  )}
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="bg-transparent border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10 font-semibold"
+                    asChild
+                  >
+                    <Link
+                      href={
+                        isClient()
+                          ? "/client/dashboard"
+                          : isFreelancer()
+                            ? "/freelancer/dashboard"
+                            : "/projects"
+                      }
+                    >
+                      Go to Dashboard
+                      <ArrowRight className="ml-2 size-4" />
+                    </Link>
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    size="lg"
+                    variant="secondary"
+                    className="font-semibold"
+                    asChild
+                  >
+                    <Link href="/register">Get Started Free</Link>
+                  </Button>
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="bg-transparent border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10 font-semibold"
+                    asChild
+                  >
+                    <Link href="/projects">Browse Projects</Link>
+                  </Button>
+                </>
+              )}
+            </motion.div>
           </div>
-        </div>
+        </section>
 
-        {/* Feature cards */}
-        <div className="mt-24 grid md:grid-cols-3 gap-8">
-          <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
-            <div className="text-4xl mb-4">🔗</div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">
-              One Link For Everything
-            </h3>
-            <p className="text-gray-600">
-              Add all your social media, shops, and websites. Share a single
-              link in your bio that leads to everything.
-            </p>
+        {/* Features */}
+        <section className="py-20 bg-background">
+          <div className="max-w-7xl mx-auto px-4">
+            <motion.h2
+              className="text-3xl font-bold text-center text-foreground mb-12"
+              variants={fadeUp}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              custom={0}
+            >
+              How It Works
+            </motion.h2>
+            <AnimatedList className="grid md:grid-cols-3 gap-8">
+              {[
+                {
+                  icon: FileText,
+                  title: "Post a Project",
+                  desc: "Clients describe what they need, set a budget, and choose a deadline.",
+                },
+                {
+                  icon: Handshake,
+                  title: "Get Proposals",
+                  desc: "Freelancers pitch their skills and set their price. Accept the best fit.",
+                },
+                {
+                  icon: CheckCircle,
+                  title: "Collaborate & Pay",
+                  desc: "Work together via contracts, chat in real-time, and leave reviews.",
+                },
+              ].map((f) => (
+                <AnimatedItem key={f.title}>
+                  <Card className="text-center hover:shadow-lg transition-shadow border-border/50 h-full">
+                    <CardHeader className="items-center pt-8">
+                      <motion.div
+                        className="size-14 rounded-full bg-primary/10 flex items-center justify-center mb-2"
+                        whileHover={{ scale: 1.1 }}
+                        transition={{ type: "spring", stiffness: 300 }}
+                      >
+                        <f.icon className="size-7 text-primary" />
+                      </motion.div>
+                      <CardTitle className="text-xl">{f.title}</CardTitle>
+                      <CardDescription className="text-base">
+                        {f.desc}
+                      </CardDescription>
+                    </CardHeader>
+                  </Card>
+                </AnimatedItem>
+              ))}
+            </AnimatedList>
           </div>
-          <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
-            <div className="text-4xl mb-4">📊</div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">
-              Real-Time Analytics
-            </h3>
-            <p className="text-gray-600">
-              See who clicks your links, when they click, what device
-              they&apos;re using, and where they come from.
-            </p>
-          </div>
-          <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
-            <div className="text-4xl mb-4">🤖</div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">
-              AI-Powered Insights
-            </h3>
-            <p className="text-gray-600">
-              Get smart suggestions on when to post, which links perform best,
-              and how to grow your audience.
-            </p>
-          </div>
-        </div>
+        </section>
 
-        {/* How it works */}
-        <div className="mt-24 text-center">
-          <h2 className="text-3xl font-bold text-gray-900 mb-12">
-            How It Works
-          </h2>
-          <div className="grid md:grid-cols-4 gap-6">
-            {[
-              { step: "1", title: "Sign Up", desc: "Create your free account" },
-              {
-                step: "2",
-                title: "Add Links",
-                desc: "Add all your social media & shop links",
-              },
-              {
-                step: "3",
-                title: "Share",
-                desc: "Get your unique link & put it everywhere",
-              },
-              {
-                step: "4",
-                title: "Track",
-                desc: "Watch clicks & get AI suggestions",
-              },
-            ].map((item) => (
-              <div key={item.step} className="flex flex-col items-center">
-                <div className="w-12 h-12 rounded-full bg-violet-100 text-violet-700 font-bold text-xl flex items-center justify-center mb-3">
-                  {item.step}
-                </div>
-                <h4 className="font-bold text-gray-900">{item.title}</h4>
-                <p className="text-sm text-gray-500 mt-1">{item.desc}</p>
-              </div>
-            ))}
+        {/* CTA */}
+        <motion.section
+          className="py-20 bg-muted/50"
+          variants={fadeUp}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          custom={0}
+        >
+          <div className="max-w-3xl mx-auto px-4 text-center">
+            <h2 className="text-3xl font-bold text-foreground mb-4">
+              Ready to get started?
+            </h2>
+            <p className="text-muted-foreground mb-8">
+              Join thousands of clients and freelancers building amazing things
+              together.
+            </p>
+            {!user && (
+              <motion.div
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.97 }}
+              >
+                <Button size="lg" className="font-semibold" asChild>
+                  <Link href="/register">Create Your Account</Link>
+                </Button>
+              </motion.div>
+            )}
           </div>
-        </div>
-      </main>
+        </motion.section>
 
-      {/* Footer */}
-      <footer className="border-t border-gray-200 py-8 px-6">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between text-sm text-gray-500">
-          <span>&copy; 2026 LinkHub. All rights reserved.</span>
-          <span>Built for ADDITI Academy Final Project</span>
-        </div>
-      </footer>
-    </div>
+        {/* Footer */}
+        <footer className="bg-foreground/95 text-background/60 py-8">
+          <div className="max-w-7xl mx-auto px-4 text-center text-sm">
+            © {new Date().getFullYear()} FreelanceHub. All rights reserved.
+          </div>
+        </footer>
+      </div>
+    </PageTransition>
   );
 }

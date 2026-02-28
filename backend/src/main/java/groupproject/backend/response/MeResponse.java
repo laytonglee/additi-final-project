@@ -1,44 +1,26 @@
 package groupproject.backend.response;
 
-import jakarta.annotation.Nullable;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.Set;
 
 @Data
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 public class MeResponse {
-    @Nullable
-    private String username;
-
-    @Nullable
+    private Long id;
+    private String name;
     private String email;
-
-    @Nullable
-    private String photo;
-
-    @Nullable
-    private String phoneNumber;
-
-    @Nullable
-    private String address;
-
-    @Nullable
     private String bio;
-
-    @Nullable
-    private String themeColor;
-
-    @Nullable
-    private String backgroundColor;
-
-    @Nullable
-    private String buttonStyle;
-
-    @Nullable
+    private String skills;
+    private String avatarUrl;
+    private boolean isBanned;
+    private boolean isOnline;
+    private boolean notifEmail;
+    private boolean notifPush;
     private Set<String> roles;
-
 }

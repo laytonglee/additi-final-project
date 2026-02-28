@@ -74,21 +74,29 @@ public class AuthServiceImpl implements AuthService {
             throw new IllegalArgumentException("Passwords do not match");
         }
 
-        Role userRole = roleRepository.findByName("USER")
-                .orElseThrow(() -> new RuntimeException("Default role USER not found"));
+        // Validate role - must be CLIENT or FREELANCER
+        String roleName = request.getRole().toUpperCase();
+        if (!roleName.equals("CLIENT") && !roleName.equals("FREELANCER")) {
+            throw new IllegalArgumentException("Role must be CLIENT or FREELANCER");
+        }
+
+        Role userRole = roleRepository.findByName(roleName)
+                .orElseThrow(() -> new RuntimeException("Role " + roleName + " not found"));
 
         User user = new User();
-        user.setUsername(request.getUsername());
+        user.setName(request.getName());
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setEnable(true);
+        user.setBio(request.getBio());
+        user.setSkills(request.getSkills());
         user.setRoles(Set.of(userRole));
 
         userRepository.save(user);
 
         RegisterResponse data = RegisterResponse.builder()
                 .id(user.getId())
-                .username(user.getRealUsername())
+                .username(user.getRealName())
                 .email(user.getEmail())
                 .roles(user.getRoles().stream().map(Role::getName).collect(Collectors.toSet()))
                 .build();
@@ -111,10 +119,13 @@ public class AuthServiceImpl implements AuthService {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
+        // Update online status
+        user.setOnline(true);
+        userRepository.save(user);
+
         String accessToken = jwtService.generateAccessToken(user);
         String refreshToken = jwtService.generateRefreshToken(user);
 
-        // Remove all old refresh tokens for this user before issuing a new one
         refreshTokenRepository.deleteAllByUser(user);
 
         RefreshToken tokenEntity = new RefreshToken();
@@ -152,23 +163,19 @@ public class AuthServiceImpl implements AuthService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
-        MeResponse res = new MeResponse();
-        res.setEmail(user.getEmail());
-        res.setUsername(user.getRealUsername());
-        res.setPhoto(user.getPhoto());
-        res.setPhoneNumber(user.getPhoneNumber());
-        res.setAddress(user.getAddress());
-        res.setBio(user.getBio());
-        res.setThemeColor(user.getThemeColor());
-        res.setBackgroundColor(user.getBackgroundColor());
-        res.setButtonStyle(user.getButtonStyle());
-        res.setRoles(
-                user.getRoles()
-                        .stream()
-                        .map(Role::getName)
-                        .collect(Collectors.toSet()));
-
-        return res;
+        return MeResponse.builder()
+                .id(user.getId())
+                .name(user.getRealName())
+                .email(user.getEmail())
+                .bio(user.getBio())
+                .skills(user.getSkills())
+                .avatarUrl(user.getAvatarUrl())
+                .isBanned(user.isBanned())
+                .isOnline(user.isOnline())
+                .notifEmail(user.isNotifEmail())
+                .notifPush(user.isNotifPush())
+                .roles(user.getRoles().stream().map(Role::getName).collect(Collectors.toSet()))
+                .build();
     }
 
 
@@ -193,10 +200,8 @@ public class AuthServiceImpl implements AuthService {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh token missing");
         }
 
-        // Validates: exists in DB, not revoked, and expiresAt has not passed
         RefreshToken storedToken = refreshTokenService.verify(refreshToken);
 
-        // Also validate JWT signature / structure
         if (!jwtService.validateRefreshToken(refreshToken)) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid refresh token");
         }
@@ -222,49 +227,28 @@ public class AuthServiceImpl implements AuthService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
-        // Only update fields that are provided (not null)
-        if (request.getUsername() != null) {
-            user.setUsername(request.getUsername());
-        }
-        if (request.getPhoneNumber() != null) {
-            user.setPhoneNumber(request.getPhoneNumber());
-        }
-        if (request.getAddress() != null) {
-            user.setAddress(request.getAddress());
-        }
-        if (request.getBio() != null) {
-            user.setBio(request.getBio());
-        }
-        if (request.getPhoto() != null) {
-            user.setPhoto(request.getPhoto());
-        }
-        if (request.getThemeColor() != null) {
-            user.setThemeColor(request.getThemeColor());
-        }
-        if (request.getBackgroundColor() != null) {
-            user.setBackgroundColor(request.getBackgroundColor());
-        }
-        if (request.getButtonStyle() != null) {
-            user.setButtonStyle(request.getButtonStyle());
-        }
+        if (request.getName() != null) user.setName(request.getName());
+        if (request.getBio() != null) user.setBio(request.getBio());
+        if (request.getSkills() != null) user.setSkills(request.getSkills());
+        if (request.getAvatarUrl() != null) user.setAvatarUrl(request.getAvatarUrl());
+        if (request.getNotifEmail() != null) user.setNotifEmail(request.getNotifEmail());
+        if (request.getNotifPush() != null) user.setNotifPush(request.getNotifPush());
 
         userRepository.save(user);
 
-        MeResponse data = new MeResponse();
-        data.setEmail(user.getEmail());
-        data.setUsername(user.getRealUsername());
-        data.setPhoto(user.getPhoto());
-        data.setPhoneNumber(user.getPhoneNumber());
-        data.setAddress(user.getAddress());
-        data.setBio(user.getBio());
-        data.setThemeColor(user.getThemeColor());
-        data.setBackgroundColor(user.getBackgroundColor());
-        data.setButtonStyle(user.getButtonStyle());
-        data.setRoles(
-                user.getRoles()
-                        .stream()
-                        .map(Role::getName)
-                        .collect(Collectors.toSet()));
+        MeResponse data = MeResponse.builder()
+                .id(user.getId())
+                .name(user.getRealName())
+                .email(user.getEmail())
+                .bio(user.getBio())
+                .skills(user.getSkills())
+                .avatarUrl(user.getAvatarUrl())
+                .isBanned(user.isBanned())
+                .isOnline(user.isOnline())
+                .notifEmail(user.isNotifEmail())
+                .notifPush(user.isNotifPush())
+                .roles(user.getRoles().stream().map(Role::getName).collect(Collectors.toSet()))
+                .build();
 
         return ApiResponse.success(data, "Profile updated successfully");
     }

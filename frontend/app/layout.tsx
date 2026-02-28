@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { AuthProvider } from "@/context/AuthContext";
+import { AuthInitializer } from "@/components/AuthInitializer";
+import { Navbar } from "@/components/Navbar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,9 +15,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "LinkHub - All Your Links in One Place",
+  title: "FreelanceHub - Connect Clients & Freelancers",
   description:
-    "Create a single link page for all your social media profiles, shops, and websites. Track clicks and get AI-powered insights.",
+    "Post projects, submit proposals, manage contracts, and collaborate. The complete freelancer project board.",
 };
 
 export default function RootLayout({
@@ -27,9 +28,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground min-h-screen`}
       >
-        <AuthProvider>{children}</AuthProvider>
+        <AuthInitializer />
+        <Navbar />
+        <main>{children}</main>
       </body>
     </html>
   );
