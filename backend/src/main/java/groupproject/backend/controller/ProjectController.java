@@ -1,0 +1,103 @@
+package groupproject.backend.controller;
+
+import groupproject.backend.model.Project;
+import groupproject.backend.model.User;
+import groupproject.backend.model.enums.ProjectStatus;
+import groupproject.backend.repository.ProposalRepository;
+import groupproject.backend.request.CreateProjectRequest;
+import groupproject.backend.request.UpdateProjectRequest;
+import groupproject.backend.response.ApiResponse;
+import groupproject.backend.response.ProjectResponse;
+import groupproject.backend.service.ProjectService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+
+import java.math.BigDecimal;
+
+@RestController
+@RequestMapping("/api/projects")
+@RequiredArgsConstructor
+public class ProjectController {
+
+    private final ProjectService projectService;
+    private final ProposalRepository proposalRepository;
+
+    @GetMapping
+    public ResponseEntity<ApiResponse<Page<ProjectResponse>>> getAll(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Page<Project> projects = projectService.getOpen(
+                PageRequest.of(page, size, Sort.by("createdAt").descending()));
+        return ResponseEntity.ok(ApiResponse.success(projects.map(this::toResponse), "Projects retrieved"));
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<ApiResponse<Page<ProjectResponse>>> search(
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) BigDecimal minBudget,
+            @RequestParam(required = false) BigDecimal maxBudget,
+            @RequestParam(required = false) ProjectStatus status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Page<Project> projects = projectService.search(category, minBudget, maxBudget, status,
+                PageRequest.of(page, size, Sort.by("createdAt").descending()));
+        return ResponseEntity.ok(ApiResponse.success(projects.map(this::toResponse), "Search results"));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<ProjectResponse>> getById(@PathVariable Long id) {
+        Project p = projectService.getById(id);
+        return ResponseEntity.ok(ApiResponse.success(toResponse(p), "Project details"));
+    }
+
+    @PostMapping
+    public ResponseEntity<ApiResponse<ProjectResponse>> create(
+            @Valid @RequestBody CreateProjectRequest request,
+            @AuthenticationPrincipal User user) {
+        Project p = projectService.create(request, user);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success(toResponse(p), "Project created"));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<ProjectResponse>> update(
+            @PathVariable Long id,
+            @RequestBody UpdateProjectRequest request,
+            @AuthenticationPrincipal User user) {
+        Project p = projectService.update(id, request, user);
+        return ResponseEntity.ok(ApiResponse.success(toResponse(p), "Project updated"));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> delete(
+            @PathVariable Long id,
+            @AuthenticationPrincipal User user) {
+        projectService.delete(id, user);
+        return ResponseEntity.ok(ApiResponse.success(null, "Project deleted"));
+    }
+
+    private ProjectResponse toResponse(Project p) {
+        return ProjectResponse.builder()
+                .id(p.getId())
+                .clientId(p.getClient().getId())
+                .clientName(p.getClient().getRealName())
+                .title(p.getTitle())
+                .description(p.getDescription())
+                .category(p.getCategory())
+                .budgetMin(p.getBudgetMin())
+                .budgetMax(p.getBudgetMax())
+                .status(p.getStatus().name())
+                .deadline(p.getDeadline())
+                .viewCount(p.getViewCount())
+                .proposalCount(proposalRepository.countByProjectId(p.getId()))
+                .createdAt(p.getCreatedAt())
+                .build();
+    }
+}

@@ -1,0 +1,49 @@
+package groupproject.backend.service.impl;
+
+import groupproject.backend.model.RefreshToken;
+import groupproject.backend.repository.RefreshTokenRepository;
+import groupproject.backend.service.RefreshTokenService;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.time.Instant;
+
+@Service
+public class RefreshTokenServiceImpl implements RefreshTokenService {
+
+    private final RefreshTokenRepository refreshTokenRepository;
+
+    public RefreshTokenServiceImpl(RefreshTokenRepository refreshTokenRepository) {
+        this.refreshTokenRepository = refreshTokenRepository;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public RefreshToken verify(String token) {
+
+        RefreshToken refreshToken = refreshTokenRepository.findByToken(token)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid refresh token"));
+
+        if (refreshToken.isRevoked()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh token revoked");
+        }
+
+        if (refreshToken.getExpiresAt().isBefore(Instant.now())) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh token expired");
+        }
+
+        return refreshToken;
+    }
+
+    @Override
+    @Transactional
+    public void revoke(String token) {
+        refreshTokenRepository.findByToken(token)
+                .ifPresent(rt -> {
+                    rt.setRevoked(true);
+                    refreshTokenRepository.save(rt);
+                });
+    }
+}
