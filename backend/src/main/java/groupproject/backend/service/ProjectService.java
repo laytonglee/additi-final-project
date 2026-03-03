@@ -16,6 +16,6 @@ public interface ProjectService {
     void delete(Long id, User user);
     Project getById(Long id);
     Page<Project> getOpen(Pageable pageable);
-    Page<Project> search(String category, BigDecimal minBudget, BigDecimal maxBudget,
+    Page<Project> search(String keyword, String category, BigDecimal minBudget, BigDecimal maxBudget,
                          ProjectStatus status, Pageable pageable);
 }

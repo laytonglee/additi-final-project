@@ -36,8 +36,9 @@ api.interceptors.response.use(
   async (error) => {
     const original = error.config;
 
-    // Don't intercept the refresh call itself to avoid loops
-    if (original.url === "/api/auth/refresh") {
+    // Don't intercept auth endpoints – login/register/refresh should surface
+    // their own errors (e.g. "Invalid email or password") directly.
+    if (original.url?.startsWith("/api/auth/")) {
       return Promise.reject(error);
     }
 
@@ -96,9 +97,13 @@ export interface ProjectData {
   id: number;
   clientId: number;
   clientName: string;
+  assignedFreelancerId: number | null;
+  assignedFreelancerName: string | null;
   title: string;
   description: string;
   category: string;
+  projectType: string | null;
+  experienceLevel: string | null;
   budgetMin: number;
   budgetMax: number;
   status: string;
@@ -106,6 +111,7 @@ export interface ProjectData {
   viewCount: number;
   proposalCount: number;
   createdAt: string;
+  updatedAt: string;
 }
 
 export interface ProposalData {
@@ -251,6 +257,9 @@ export const authApi = {
 
   updateProfile: (body: {
     name?: string;
+    email?: string;
+    currentPassword?: string;
+    newPassword?: string;
     bio?: string;
     skills?: string;
     avatarUrl?: string;
@@ -289,6 +298,7 @@ export const projectApi = {
     ),
 
   search: (params: {
+    keyword?: string;
     category?: string;
     minBudget?: number;
     maxBudget?: number;
@@ -297,6 +307,7 @@ export const projectApi = {
     size?: number;
   }) => {
     const query = new URLSearchParams();
+    if (params.keyword) query.set("keyword", params.keyword);
     if (params.category) query.set("category", params.category);
     if (params.minBudget) query.set("minBudget", String(params.minBudget));
     if (params.maxBudget) query.set("maxBudget", String(params.maxBudget));
@@ -315,6 +326,8 @@ export const projectApi = {
     title: string;
     description: string;
     category: string;
+    projectType?: string;
+    experienceLevel?: string;
     budgetMin: number;
     budgetMax: number;
     deadline?: string;

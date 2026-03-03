@@ -18,6 +18,10 @@ public class CreateProjectRequest {
 
     private String category;
 
+    private String projectType;
+
+    private String experienceLevel;
+
     @NotNull(message = "Minimum budget is required")
     @Positive
     private BigDecimal budgetMin;

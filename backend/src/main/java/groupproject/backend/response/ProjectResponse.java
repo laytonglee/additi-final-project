@@ -17,9 +17,13 @@ public class ProjectResponse {
     private Long id;
     private Long clientId;
     private String clientName;
+    private Long assignedFreelancerId;
+    private String assignedFreelancerName;
     private String title;
     private String description;
     private String category;
+    private String projectType;
+    private String experienceLevel;
     private BigDecimal budgetMin;
     private BigDecimal budgetMax;
     private String status;
@@ -27,4 +31,5 @@ public class ProjectResponse {
     private int viewCount;
     private long proposalCount;
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }

@@ -2,7 +2,9 @@ package groupproject.backend.service.impl;
 
 import groupproject.backend.model.Project;
 import groupproject.backend.model.User;
+import groupproject.backend.model.enums.ExperienceLevel;
 import groupproject.backend.model.enums.ProjectStatus;
+import groupproject.backend.model.enums.ProjectType;
 import groupproject.backend.repository.ProjectRepository;
 import groupproject.backend.request.CreateProjectRequest;
 import groupproject.backend.request.UpdateProjectRequest;
@@ -31,6 +33,8 @@ public class ProjectServiceImpl implements ProjectService {
         p.setTitle(request.getTitle());
         p.setDescription(request.getDescription());
         p.setCategory(request.getCategory());
+        if (request.getProjectType() != null) p.setProjectType(ProjectType.valueOf(request.getProjectType()));
+        if (request.getExperienceLevel() != null) p.setExperienceLevel(ExperienceLevel.valueOf(request.getExperienceLevel()));
         p.setBudgetMin(request.getBudgetMin());
         p.setBudgetMax(request.getBudgetMax());
         p.setDeadline(request.getDeadline());
@@ -51,6 +55,8 @@ public class ProjectServiceImpl implements ProjectService {
         if (request.getTitle() != null) p.setTitle(request.getTitle());
         if (request.getDescription() != null) p.setDescription(request.getDescription());
         if (request.getCategory() != null) p.setCategory(request.getCategory());
+        if (request.getProjectType() != null) p.setProjectType(ProjectType.valueOf(request.getProjectType()));
+        if (request.getExperienceLevel() != null) p.setExperienceLevel(ExperienceLevel.valueOf(request.getExperienceLevel()));
         if (request.getBudgetMin() != null) p.setBudgetMin(request.getBudgetMin());
         if (request.getBudgetMax() != null) p.setBudgetMax(request.getBudgetMax());
         if (request.getDeadline() != null) p.setDeadline(request.getDeadline());
@@ -90,8 +96,8 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public Page<Project> search(String category, BigDecimal minBudget, BigDecimal maxBudget,
+    public Page<Project> search(String keyword, String category, BigDecimal minBudget, BigDecimal maxBudget,
                                 ProjectStatus status, Pageable pageable) {
-        return projectRepository.search(category, minBudget, maxBudget, status, pageable);
+        return projectRepository.search(keyword, category, minBudget, maxBudget, status, pageable);
     }
 }

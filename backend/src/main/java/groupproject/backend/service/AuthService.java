@@ -16,5 +16,5 @@ public interface AuthService {
     void logout(String refreshToken, HttpServletResponse response);
     MeResponse me(Authentication authentication);
     ApiResponse<Void> refresh(String refreshToken, HttpServletResponse response);
-    ApiResponse<MeResponse> updateProfile(Authentication authentication, UpdateProfileRequest request);
+    ApiResponse<MeResponse> updateProfile(Authentication authentication, UpdateProfileRequest request, HttpServletResponse response);
 }

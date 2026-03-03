@@ -216,7 +216,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional
-    public ApiResponse<MeResponse> updateProfile(Authentication authentication, UpdateProfileRequest request) {
+    public ApiResponse<MeResponse> updateProfile(Authentication authentication, UpdateProfileRequest request, HttpServletResponse response) {
 
         if (authentication == null || !authentication.isAuthenticated()) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Not authenticated");
@@ -234,7 +234,49 @@ public class AuthServiceImpl implements AuthService {
         if (request.getNotifEmail() != null) user.setNotifEmail(request.getNotifEmail());
         if (request.getNotifPush() != null) user.setNotifPush(request.getNotifPush());
 
+        // Email update
+        boolean emailChanged = false;
+        if (request.getEmail() != null && !request.getEmail().isBlank()
+                && !request.getEmail().equals(user.getEmail())) {
+            if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already in use");
+            }
+            user.setEmail(request.getEmail());
+            emailChanged = true;
+        }
+
+        // Password update
+        if (request.getNewPassword() != null && !request.getNewPassword().isBlank()) {
+            if (request.getCurrentPassword() == null || request.getCurrentPassword().isBlank()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Current password is required");
+            }
+            if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Current password is incorrect");
+            }
+            if (request.getNewPassword().length() < 6) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "New password must be at least 6 characters");
+            }
+            user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        }
+
         userRepository.save(user);
+
+        // Reissue JWT cookies when email changes so the token subject stays valid
+        if (emailChanged && response != null) {
+            String newAccessToken = jwtService.generateAccessToken(user);
+            String newRefreshToken = jwtService.generateRefreshToken(user);
+
+            refreshTokenRepository.deleteAllByUser(user);
+            RefreshToken tokenEntity = new RefreshToken();
+            tokenEntity.setToken(newRefreshToken);
+            tokenEntity.setUser(user);
+            tokenEntity.setRevoked(false);
+            tokenEntity.setExpiresAt(Instant.now().plusMillis(jwtProperties.getRefreshExpiration()));
+            refreshTokenRepository.save(tokenEntity);
+
+            CookieUtil.addCookie(response, "accessToken", newAccessToken, jwtProperties.getExpiration());
+            CookieUtil.addCookie(response, "refreshToken", newRefreshToken, jwtProperties.getRefreshExpiration());
+        }
 
         MeResponse data = MeResponse.builder()
                 .id(user.getId())
