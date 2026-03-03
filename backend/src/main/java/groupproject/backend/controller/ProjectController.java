@@ -40,13 +40,14 @@ public class ProjectController {
 
     @GetMapping("/search")
     public ResponseEntity<ApiResponse<Page<ProjectResponse>>> search(
+            @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String category,
             @RequestParam(required = false) BigDecimal minBudget,
             @RequestParam(required = false) BigDecimal maxBudget,
             @RequestParam(required = false) ProjectStatus status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        Page<Project> projects = projectService.search(category, minBudget, maxBudget, status,
+        Page<Project> projects = projectService.search(keyword, category, minBudget, maxBudget, status,
                 PageRequest.of(page, size, Sort.by("createdAt").descending()));
         return ResponseEntity.ok(ApiResponse.success(projects.map(this::toResponse), "Search results"));
     }
@@ -88,9 +89,13 @@ public class ProjectController {
                 .id(p.getId())
                 .clientId(p.getClient().getId())
                 .clientName(p.getClient().getRealName())
+                .assignedFreelancerId(p.getAssignedFreelancer() != null ? p.getAssignedFreelancer().getId() : null)
+                .assignedFreelancerName(p.getAssignedFreelancer() != null ? p.getAssignedFreelancer().getRealName() : null)
                 .title(p.getTitle())
                 .description(p.getDescription())
                 .category(p.getCategory())
+                .projectType(p.getProjectType() != null ? p.getProjectType().name() : null)
+                .experienceLevel(p.getExperienceLevel() != null ? p.getExperienceLevel().name() : null)
                 .budgetMin(p.getBudgetMin())
                 .budgetMax(p.getBudgetMax())
                 .status(p.getStatus().name())
@@ -98,6 +103,7 @@ public class ProjectController {
                 .viewCount(p.getViewCount())
                 .proposalCount(proposalRepository.countByProjectId(p.getId()))
                 .createdAt(p.getCreatedAt())
+                .updatedAt(p.getUpdatedAt())
                 .build();
     }
 }

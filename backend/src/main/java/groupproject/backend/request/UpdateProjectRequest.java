@@ -11,6 +11,8 @@ public class UpdateProjectRequest {
     private String title;
     private String description;
     private String category;
+    private String projectType;
+    private String experienceLevel;
     private BigDecimal budgetMin;
     private BigDecimal budgetMax;
     private LocalDate deadline;

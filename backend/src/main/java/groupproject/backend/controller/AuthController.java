@@ -47,9 +47,10 @@ public class AuthController {
     @PutMapping("/profile")
     public ResponseEntity<ApiResponse<MeResponse>> updateProfile(
             Authentication authentication,
-            @Valid @RequestBody UpdateProfileRequest request
+            @Valid @RequestBody UpdateProfileRequest request,
+            HttpServletResponse response
     ) {
-        return ResponseEntity.ok(authService.updateProfile(authentication, request));
+        return ResponseEntity.ok(authService.updateProfile(authentication, request, response));
     }
 
     @PostMapping("/logout")
