@@ -9,7 +9,15 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { FileText, Handshake, CheckCircle, ArrowRight } from "lucide-react";
+import {
+  FileText,
+  Handshake,
+  CheckCircle,
+  ArrowRight,
+  Users,
+  Briefcase,
+  Globe,
+} from "lucide-react";
 import { motion } from "framer-motion";
 import { PageTransition } from "@/components/PageTransition";
 import { AnimatedList, AnimatedItem } from "@/components/AnimatedList";
@@ -130,6 +138,34 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* STATS */}
+        <section className="py-16 border-b">
+          <div className="max-w-6xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+            {[
+              { icon: Users, value: "10K+", label: "Freelancers" },
+              { icon: Briefcase, value: "4K+", label: "Projects Posted" },
+              { icon: CheckCircle, value: "95%", label: "Success Rate" },
+              { icon: Globe, value: "120+", label: "Countries" },
+            ].map((s, i) => (
+              <motion.div
+                key={s.label}
+                variants={fadeUp}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true }}
+                custom={i * 0.1}
+              >
+                <div className="flex justify-center mb-2">
+                  <s.icon className="text-primary size-6" />
+                </div>
+
+                <p className="text-3xl font-bold text-primary">{s.value}</p>
+                <p className="text-muted-foreground">{s.label}</p>
+              </motion.div>
+            ))}
+          </div>
+        </section>
+
         {/* Features */}
         <section className="py-20 bg-background">
           <div className="max-w-7xl mx-auto px-4">
@@ -180,6 +216,45 @@ export default function HomePage() {
                 </AnimatedItem>
               ))}
             </AnimatedList>
+          </div>
+        </section>
+
+        {/* FOR FREELANCERS */}
+        <section className="py-24">
+          <div className="max-w-6xl mx-auto px-4 grid md:grid-cols-2 gap-12 items-center">
+            <motion.div
+              className="bg-card rounded-xl p-8 shadow-sm"
+              variants={fadeUp}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+            >
+              <p className="text-muted-foreground">
+                Build your portfolio, connect with clients, and grow your
+                career.
+              </p>
+            </motion.div>
+
+            <motion.div
+              variants={fadeUp}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              custom={0.2}
+            >
+              <h2 className="text-3xl font-bold mb-4">
+                Find Your Next Opportunity
+              </h2>
+
+              <p className="text-muted-foreground mb-6">
+                Explore projects that match your skills and start working
+                globally.
+              </p>
+
+              <Button asChild>
+                <Link href="/projects">Browse Projects</Link>
+              </Button>
+            </motion.div>
           </div>
         </section>
 

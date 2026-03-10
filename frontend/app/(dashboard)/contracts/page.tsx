@@ -84,7 +84,7 @@ export default function ContractsPage() {
     return (
       <Link href={`/contracts/${contract.id}`}>
         <Card className="hover:shadow-md hover:border-primary/30 transition-all cursor-pointer group">
-          <CardContent className="py-5">
+          <CardContent>
             <div className="flex items-center justify-between gap-4">
               {/* Left: info */}
               <div className="min-w-0 flex-1">
@@ -242,7 +242,7 @@ export default function ContractsPage() {
             </TabsList>
 
             {/* All contracts */}
-            <TabsContent value="all" className="mt-4">
+            <TabsContent value="all" className="">
               {contracts.length === 0 ? (
                 <EmptyState message="No contracts yet. Accept a proposal to get started!" />
               ) : (

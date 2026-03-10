@@ -17,8 +17,8 @@ public class JwtProperties {
     private String secret;
 
     @Min(60000)
-    private long expiration = 1000 * 60 * 10; // 10 minute
+    private long expiration = 1000 * 60 * 15; // 15 minutes
 
     @Min(60000)
-    private long refreshExpiration = 1000 * 60 * 60 * 2; // 2 hours
+    private long refreshExpiration = 1000 * 60 * 60 * 24 * 7L; // 7 days
 }

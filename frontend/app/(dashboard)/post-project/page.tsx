@@ -96,9 +96,9 @@ export default function PostProjectPage() {
 
   return (
     <PageTransition>
-      <div className="max-w-2xl mx-auto px-4 py-8">
+      <div className="max-w-2xl mx-auto px-4 py-4">
         <motion.div
-          className="mb-8"
+          className="mb-5"
           initial={{ opacity: 0, y: -12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
@@ -165,7 +165,7 @@ export default function PostProjectPage() {
                     required
                     value={form.description}
                     onChange={(e) => update("description", e.target.value)}
-                    rows={6}
+                    rows={4}
                     placeholder="Describe what you need in detail…"
                     className="resize-none"
                   />

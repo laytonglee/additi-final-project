@@ -29,6 +29,16 @@ public class ProjectController {
     private final ProjectService projectService;
     private final ProposalRepository proposalRepository;
 
+    @GetMapping("/my")
+    public ResponseEntity<ApiResponse<Page<ProjectResponse>>> getMy(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "50") int size,
+            @AuthenticationPrincipal User user) {
+        Page<Project> projects = projectService.getByClient(user,
+                PageRequest.of(page, size, Sort.by("createdAt").descending()));
+        return ResponseEntity.ok(ApiResponse.success(projects.map(this::toResponse), "My projects retrieved"));
+    }
+
     @GetMapping
     public ResponseEntity<ApiResponse<Page<ProjectResponse>>> getAll(
             @RequestParam(defaultValue = "0") int page,

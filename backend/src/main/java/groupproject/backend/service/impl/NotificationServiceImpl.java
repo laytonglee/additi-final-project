@@ -61,7 +61,7 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     @Transactional
-    public void markAllAsRead(Long userId) {
-        notificationRepository.markAllAsReadByUser(userId);
+    public int markAllAsRead(Long userId) {
+        return notificationRepository.markAllAsReadByUser(userId);
     }
 }

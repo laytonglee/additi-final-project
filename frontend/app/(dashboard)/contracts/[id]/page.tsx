@@ -19,7 +19,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CheckCircle, Send, Star } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { CheckCircle, MessageSquare, Send, Star } from "lucide-react";
 import { motion } from "framer-motion";
 import { PageTransition } from "@/components/PageTransition";
 
@@ -145,7 +146,7 @@ export default function ContractDetailPage() {
 
   return (
     <PageTransition>
-      <div>
+      <div className="overflow-y-hidden">
         {/* Contract Info */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
@@ -208,7 +209,7 @@ export default function ContractDetailPage() {
                         Mark as Completed
                       </Button>
                     ) : (
-                      <div className="w-full bg-green-50 dark:bg-green-950/20 rounded-lg p-4 space-y-3">
+                      <div className="w-full bg-green-50 dark:bg-green-950/20 rounded-lg  space-y-3">
                         <Textarea
                           value={completingNote}
                           onChange={(e) => setCompletingNote(e.target.value)}
@@ -309,53 +310,79 @@ export default function ContractDetailPage() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15, duration: 0.4 }}
+          className="mt-4"
         >
-          <Card className="overflow-hidden">
-            <CardHeader className="bg-muted/50 py-4">
-              <CardTitle className="text-base">Messages</CardTitle>
+          <Card className="overflow-hidden flex flex-col h-[calc(100vh-260px)]">
+            {" "}
+            <CardHeader className="border-b py-3 px-5">
+              <CardTitle className="text-base flex items-center gap-2">
+                <MessageSquare className="size-4" />
+                Messages
+              </CardTitle>
             </CardHeader>
-
             {/* Messages list */}
-            <div className="h-96 overflow-y-auto p-6 space-y-4">
+            <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
+              {" "}
               {messages.length === 0 ? (
                 <div className="text-center text-muted-foreground py-16">
-                  No messages yet. Start the conversation!
+                  <MessageSquare className="size-8 mx-auto mb-3 opacity-30" />
+                  <p className="text-sm">
+                    No messages yet. Start the conversation!
+                  </p>
                 </div>
               ) : (
                 messages.map((msg) => {
                   const isMine = msg.senderId === user?.id;
-                  return (
-                    <div
-                      key={msg.id}
-                      className={`flex ${isMine ? "justify-end" : "justify-start"}`}
-                    >
+                  const time = new Date(msg.createdAt).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  });
+
+                  if (isMine) {
+                    return (
                       <div
-                        className={`max-w-[70%] rounded-2xl px-4 py-2.5 ${
-                          isMine
-                            ? "bg-primary text-primary-foreground rounded-br-md"
-                            : "bg-muted text-foreground rounded-bl-md"
-                        }`}
+                        key={msg.id}
+                        className="flex flex-col items-end gap-1"
                       >
-                        {!isMine && (
-                          <div className="text-xs font-medium mb-1 opacity-70">
-                            {msg.senderName}
-                          </div>
-                        )}
-                        <p className="text-sm whitespace-pre-wrap">
-                          {msg.body}
-                        </p>
-                        <div
-                          className={`text-xs mt-1 ${
-                            isMine
-                              ? "text-primary-foreground/60"
-                              : "text-muted-foreground"
-                          }`}
-                        >
-                          {new Date(msg.createdAt).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
+                        <div className="w-fit max-w-[70%] rounded-2xl rounded-br-sm bg-primary text-primary-foreground px-4 py-2.5">
+                          <p className="text-sm whitespace-pre-wrap">
+                            {msg.body}
+                          </p>
                         </div>
+                        <span className="text-[11px] text-muted-foreground mr-1">
+                          {time}
+                        </span>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div key={msg.id} className="flex items-start gap-2.5">
+                      <Avatar className="size-8 shrink-0 mt-0.5">
+                        {msg.senderAvatarUrl && (
+                          <AvatarImage src={msg.senderAvatarUrl} />
+                        )}
+                        <AvatarFallback className="text-[10px] bg-primary/10 text-primary font-semibold">
+                          {msg.senderName
+                            .split(" ")
+                            .map((w: string) => w[0])
+                            .join("")
+                            .toUpperCase()
+                            .slice(0, 2)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex flex-col gap-1 max-w-[70%]">
+                        <span className="text-xs font-medium text-muted-foreground">
+                          {msg.senderName}
+                        </span>
+                        <div className="w-fit rounded-2xl rounded-bl-sm bg-muted px-4 py-2.5">
+                          <p className="text-sm whitespace-pre-wrap text-foreground">
+                            {msg.body}
+                          </p>
+                        </div>
+                        <span className="text-[11px] text-muted-foreground ml-1">
+                          {time}
+                        </span>
                       </div>
                     </div>
                   );
@@ -363,9 +390,8 @@ export default function ContractDetailPage() {
               )}
               <div ref={messagesEndRef} />
             </div>
-
-            {/* Message input */}
-            {contract.status === "ACTIVE" && (
+            {/* Message input or disabled footer */}
+            {contract.status === "ACTIVE" ? (
               <form
                 onSubmit={handleSend}
                 className="border-t px-4 py-3 flex gap-3"
@@ -384,6 +410,14 @@ export default function ContractDetailPage() {
                   <Send className="size-4" />
                 </Button>
               </form>
+            ) : (
+              <div className="border-t px-4 py-3 text-center">
+                <p className="text-sm text-muted-foreground">
+                  This contract is{" "}
+                  {contract.status.toLowerCase().replace("_", " ")} — messaging
+                  is disabled.
+                </p>
+              </div>
             )}
           </Card>
         </motion.div>

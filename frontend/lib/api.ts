@@ -36,9 +36,13 @@ api.interceptors.response.use(
   async (error) => {
     const original = error.config;
 
-    // Don't intercept auth endpoints – login/register/refresh should surface
-    // their own errors (e.g. "Invalid email or password") directly.
-    if (original.url?.startsWith("/api/auth/")) {
+    const skipRefreshUrls = [
+      "/api/auth/login",
+      "/api/auth/register",
+      "/api/auth/refresh",
+      "/api/auth/logout",
+    ];
+    if (skipRefreshUrls.some((u) => original.url?.startsWith(u))) {
       return Promise.reject(error);
     }
 
@@ -59,6 +63,17 @@ api.interceptors.response.use(
         return api(original);
       } catch (refreshError) {
         processQueue(refreshError);
+        // Both tokens expired — clear auth state and redirect to login
+        if (typeof window !== "undefined") {
+          // Avoid redirect loops on the login/register pages themselves
+          const path = window.location.pathname;
+          if (!path.startsWith("/login") && !path.startsWith("/register")) {
+            // Lazily import store to avoid circular deps at module load time
+            import("@/store/auth").then(({ useAuthStore }) => {
+              useAuthStore.getState().logout();
+            });
+          }
+        }
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
@@ -297,6 +312,11 @@ export const projectApi = {
       `/api/projects?page=${page}&size=${size}`,
     ),
 
+  getMy: (page = 0, size = 50) =>
+    api.get<ApiResponse<PageData<ProjectData>>>(
+      `/api/projects/my?page=${page}&size=${size}`,
+    ),
+
   search: (params: {
     keyword?: string;
     category?: string;
@@ -423,7 +443,7 @@ export const messageApi = {
 // ── Notifications API ─────────────────────────────
 
 export const notificationApi = {
-  getAll: (page = 0, size = 20) =>
+  getAll: (page = 0, size = 6) =>
     api.get<ApiResponse<PageData<NotificationData>>>(
       `/api/notifications?page=${page}&size=${size}`,
     ),
@@ -434,7 +454,8 @@ export const notificationApi = {
   markRead: (id: number) =>
     api.put<ApiResponse<void>>(`/api/notifications/${id}/read`),
 
-  markAllRead: () => api.put<ApiResponse<void>>("/api/notifications/read-all"),
+  markAllRead: () =>
+    api.put<ApiResponse<number>>("/api/notifications/read-all"),
 };
 
 // ── Admin API ─────────────────────────────────────

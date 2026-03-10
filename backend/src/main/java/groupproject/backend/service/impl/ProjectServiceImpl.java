@@ -100,4 +100,9 @@ public class ProjectServiceImpl implements ProjectService {
                                 ProjectStatus status, Pageable pageable) {
         return projectRepository.search(keyword, category, minBudget, maxBudget, status, pageable);
     }
+
+    @Override
+    public Page<Project> getByClient(User client, Pageable pageable) {
+        return projectRepository.findByClient(client, pageable);
+    }
 }

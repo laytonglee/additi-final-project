@@ -118,7 +118,7 @@ export default function SettingsPage() {
 
   return (
     <PageTransition>
-      <div className="max-w-2xl mx-auto px-4 py-8">
+      <div className="max-w-2xl mx-auto">
         <motion.h1
           className="text-3xl font-bold text-foreground mb-8"
           initial={{ opacity: 0, x: -16 }}
@@ -224,7 +224,17 @@ export default function SettingsPage() {
                     </div>
                   </div>
 
-                  <Separator className="my-2" />
+                  <Separator className="my-4" />
+
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email Address</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={form.email}
+                      onChange={(e) => update("email", e.target.value)}
+                    />
+                  </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="display-name">Display Name</Label>
@@ -232,6 +242,30 @@ export default function SettingsPage() {
                       id="display-name"
                       value={form.name}
                       onChange={(e) => update("name", e.target.value)}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="current-password">Current Password</Label>
+                    <Input
+                      id="current-password"
+                      type="password"
+                      value={form.currentPassword}
+                      onChange={(e) =>
+                        update("currentPassword", e.target.value)
+                      }
+                      placeholder="Required to change password"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="new-password">New Password</Label>
+                    <Input
+                      id="new-password"
+                      type="password"
+                      value={form.newPassword}
+                      onChange={(e) => update("newPassword", e.target.value)}
+                      placeholder="Min 6 characters"
                     />
                   </div>
 
@@ -296,63 +330,6 @@ export default function SettingsPage() {
                     {saving ? "Saving…" : "Save Changes"}
                   </Button>
                 </form>
-              </CardContent>
-            </Card>
-          </AnimatedItem>
-
-          <AnimatedItem>
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Account</CardTitle>
-                <CardDescription>
-                  Update your email address or password
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email Address</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={form.email}
-                    onChange={(e) => update("email", e.target.value)}
-                  />
-                </div>
-
-                <Separator className="my-2" />
-
-                <div className="space-y-2">
-                  <Label htmlFor="current-password">Current Password</Label>
-                  <Input
-                    id="current-password"
-                    type="password"
-                    value={form.currentPassword}
-                    onChange={(e) => update("currentPassword", e.target.value)}
-                    placeholder="Required to change password"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="new-password">New Password</Label>
-                  <Input
-                    id="new-password"
-                    type="password"
-                    value={form.newPassword}
-                    onChange={(e) => update("newPassword", e.target.value)}
-                    placeholder="Min 6 characters"
-                  />
-                </div>
-
-                <Separator className="my-2" />
-
-                <div className="text-sm text-muted-foreground">
-                  <p>
-                    Roles:{" "}
-                    <span className="text-foreground">
-                      {user.roles.map((r) => r.replace("ROLE_", "")).join(", ")}
-                    </span>
-                  </p>
-                </div>
               </CardContent>
             </Card>
           </AnimatedItem>

@@ -41,13 +41,14 @@ import {
   ChevronsUpDown,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { messageApi, notificationApi } from "@/lib/api";
+import { messageApi } from "@/lib/api";
+import { useNotificationStore } from "@/store/notifications";
 
 export function AppSidebar() {
   const pathname = usePathname();
   const { user, logout, isClient, isFreelancer, isAdmin } = useAuthStore();
   const [unreadMessages, setUnreadMessages] = useState(0);
-  const [unreadNotifs, setUnreadNotifs] = useState(0);
+  const unreadNotifs = useNotificationStore((s) => s.unreadCount);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -59,10 +60,6 @@ export function AppSidebar() {
     messageApi
       .unreadCount()
       .then((r) => setUnreadMessages(Number(r.data.data)))
-      .catch(() => {});
-    notificationApi
-      .unreadCount()
-      .then((r) => setUnreadNotifs(Number(r.data.data)))
       .catch(() => {});
   }, [user]);
 
@@ -78,6 +75,11 @@ export function AppSidebar() {
             label: "Dashboard",
             icon: LayoutDashboard,
           },
+          {
+            href: "/client/projects",
+            label: "My Projects",
+            icon: FolderSearch,
+          },
         ]
       : []),
     ...(isFreelancer()
@@ -87,9 +89,13 @@ export function AppSidebar() {
             label: "Dashboard",
             icon: LayoutDashboard,
           },
+          {
+            href: "/freelancer/projects",
+            label: "Browse Projects",
+            icon: FolderSearch,
+          },
         ]
       : []),
-    { href: "/projects", label: "Projects", icon: FolderSearch },
     { href: "/explore", label: "Explore", icon: Zap },
   ];
 

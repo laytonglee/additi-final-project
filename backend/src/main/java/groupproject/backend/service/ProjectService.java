@@ -18,4 +18,5 @@ public interface ProjectService {
     Page<Project> getOpen(Pageable pageable);
     Page<Project> search(String keyword, String category, BigDecimal minBudget, BigDecimal maxBudget,
                          ProjectStatus status, Pageable pageable);
+    Page<Project> getByClient(User client, Pageable pageable);
 }
