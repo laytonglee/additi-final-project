@@ -1,5 +1,6 @@
 package groupproject.backend.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
@@ -13,6 +14,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     private final WebSocketAuthChannelInterceptor authChannelInterceptor;
     private final WebSocketHandshakeInterceptor handshakeInterceptor;
+
+    @Value("${app.frontend-url:http://localhost:3000}")
+    private String frontendUrl;
 
     public WebSocketConfig(WebSocketAuthChannelInterceptor authChannelInterceptor,
                            WebSocketHandshakeInterceptor handshakeInterceptor) {
@@ -34,13 +38,13 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
                 .addInterceptors(handshakeInterceptor)
-                .setAllowedOrigins("http://localhost:3000", "http://localhost:5173")
+                .setAllowedOrigins("http://localhost:3000", "http://localhost:5173", frontendUrl)
                 .withSockJS();
 
         // Also register a raw WebSocket endpoint (no SockJS) for native clients
         registry.addEndpoint("/ws")
                 .addInterceptors(handshakeInterceptor)
-                .setAllowedOrigins("http://localhost:3000", "http://localhost:5173");
+                .setAllowedOrigins("http://localhost:3000", "http://localhost:5173", frontendUrl);
     }
 
     @Override

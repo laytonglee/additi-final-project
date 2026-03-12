@@ -43,6 +43,7 @@ public class AuthServiceImpl implements AuthService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtProperties jwtProperties;
+    private final CookieUtil cookieUtil;
 
     public AuthServiceImpl(AuthenticationManager authenticationManager,
                            UserRepository userRepository,
@@ -51,7 +52,8 @@ public class AuthServiceImpl implements AuthService {
                            RefreshTokenService refreshTokenService,
                            RefreshTokenRepository refreshTokenRepository,
                            PasswordEncoder passwordEncoder,
-                           JwtProperties jwtProperties) {
+                           JwtProperties jwtProperties,
+                           CookieUtil cookieUtil) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
@@ -60,6 +62,7 @@ public class AuthServiceImpl implements AuthService {
         this.refreshTokenRepository = refreshTokenRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtProperties = jwtProperties;
+        this.cookieUtil = cookieUtil;
     }
 
     @Override
@@ -136,8 +139,8 @@ public class AuthServiceImpl implements AuthService {
 
         refreshTokenRepository.save(tokenEntity);
 
-        CookieUtil.addCookie(response, "accessToken", accessToken, jwtProperties.getExpiration());
-        CookieUtil.addCookie(response, "refreshToken", refreshToken, jwtProperties.getRefreshExpiration());
+        cookieUtil.addCookie(response, "accessToken", accessToken, jwtProperties.getExpiration());
+        cookieUtil.addCookie(response, "refreshToken", refreshToken, jwtProperties.getRefreshExpiration());
 
         return AuthResponse.builder()
                 .type("Bearer")
@@ -187,8 +190,8 @@ public class AuthServiceImpl implements AuthService {
             refreshTokenService.revoke(refreshToken);
         }
 
-        CookieUtil.clearCookie(response, "accessToken");
-        CookieUtil.clearCookie(response, "refreshToken");
+        cookieUtil.clearCookie(response, "accessToken");
+        cookieUtil.clearCookie(response, "refreshToken");
     }
 
 
@@ -209,7 +212,7 @@ public class AuthServiceImpl implements AuthService {
         User user = storedToken.getUser();
 
         String newAccessToken = jwtService.generateAccessToken(user);
-        CookieUtil.addCookie(response, "accessToken", newAccessToken, jwtProperties.getExpiration());
+        cookieUtil.addCookie(response, "accessToken", newAccessToken, jwtProperties.getExpiration());
 
         return ApiResponse.success(null, "Token refreshed");
     }
@@ -274,8 +277,8 @@ public class AuthServiceImpl implements AuthService {
             tokenEntity.setExpiresAt(Instant.now().plusMillis(jwtProperties.getRefreshExpiration()));
             refreshTokenRepository.save(tokenEntity);
 
-            CookieUtil.addCookie(response, "accessToken", newAccessToken, jwtProperties.getExpiration());
-            CookieUtil.addCookie(response, "refreshToken", newRefreshToken, jwtProperties.getRefreshExpiration());
+            cookieUtil.addCookie(response, "accessToken", newAccessToken, jwtProperties.getExpiration());
+            cookieUtil.addCookie(response, "refreshToken", newRefreshToken, jwtProperties.getRefreshExpiration());
         }
 
         MeResponse data = MeResponse.builder()
