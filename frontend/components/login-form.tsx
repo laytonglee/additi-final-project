@@ -35,7 +35,17 @@ export function LoginForm({
     e.preventDefault();
     try {
       await login(email, password);
-      router.push("/");
+      // Redirect to the appropriate dashboard based on the user's role
+      const state = useAuthStore.getState();
+      if (state.isAdmin()) {
+        router.push("/admin");
+      } else if (state.isClient()) {
+        router.push("/client/dashboard");
+      } else if (state.isFreelancer()) {
+        router.push("/freelancer/dashboard");
+      } else {
+        router.push("/");
+      }
     } catch {
       /* error is handled in store */
     }

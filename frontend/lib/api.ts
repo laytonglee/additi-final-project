@@ -66,8 +66,14 @@ api.interceptors.response.use(
         // Both tokens expired — clear auth state only.
         // useRequireAuth handles redirecting protected pages;
         // public pages (like /) should stay accessible without a login redirect.
+        // Only clear if a login is NOT currently in progress (loading=true with no user means
+        // AuthInitializer's initial fetch failed, which is fine to clear).
         import("@/store/auth").then(({ useAuthStore }) => {
-          useAuthStore.setState({ user: null, loading: false });
+          const { user, loading } = useAuthStore.getState();
+          // Don't wipe state if login() is in progress (loading=true) or user is already set
+          if (!loading && !user) {
+            useAuthStore.setState({ user: null, loading: false });
+          }
         });
         return Promise.reject(refreshError);
       } finally {
