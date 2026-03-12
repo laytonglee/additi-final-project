@@ -68,6 +68,12 @@ public class ProjectController {
         return ResponseEntity.ok(ApiResponse.success(toResponse(p), "Project details"));
     }
 
+    @PostMapping("/{id}/view")
+    public ResponseEntity<ApiResponse<Void>> incrementView(@PathVariable Long id) {
+        projectService.incrementViewCount(id);
+        return ResponseEntity.ok(ApiResponse.success(null, "View counted"));
+    }
+
     @PostMapping
     public ResponseEntity<ApiResponse<ProjectResponse>> create(
             @Valid @RequestBody CreateProjectRequest request,

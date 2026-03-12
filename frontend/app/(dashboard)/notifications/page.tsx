@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { notificationApi, NotificationData, PageData } from "@/lib/api";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
@@ -41,6 +41,8 @@ export default function NotificationsPage() {
   const unreadCount = useNotificationStore((s) => s.unreadCount);
   const setUnreadCount = useNotificationStore((s) => s.setUnreadCount);
   const decrementUnread = useNotificationStore((s) => s.decrementUnread);
+  const realtimeQueue = useNotificationStore((s) => s.realtimeQueue);
+  const clearQueue = useNotificationStore((s) => s.clearQueue);
 
   const fetchData = async (p = 0) => {
     setLoading(true);
@@ -50,12 +52,22 @@ export default function NotificationsPage() {
       setNotifications(data.content);
       setTotalPages(data.totalPages);
       setPage(data.number);
+      // After fetching, clear the real-time queue since we have fresh data
+      clearQueue();
     } catch {
       /* ignore */
     } finally {
       setLoading(false);
     }
   };
+
+  // Merge real-time notifications on top when viewing page 0
+  const displayedNotifications = useMemo(() => {
+    if (page !== 0 || realtimeQueue.length === 0) return notifications;
+    const existingIds = new Set(notifications.map((n) => n.id));
+    const newOnes = realtimeQueue.filter((n) => !existingIds.has(n.id));
+    return [...newOnes, ...notifications];
+  }, [notifications, realtimeQueue, page]);
 
   useEffect(() => {
     fetchData();
@@ -133,7 +145,7 @@ export default function NotificationsPage() {
               </Card>
             ))}
           </div>
-        ) : notifications.length === 0 ? (
+        ) : displayedNotifications.length === 0 ? (
           <motion.div
             className="text-center py-20 text-muted-foreground"
             initial={{ opacity: 0 }}
@@ -152,7 +164,7 @@ export default function NotificationsPage() {
             }}
           >
             <AnimatePresence>
-              {notifications.map((n) => {
+              {displayedNotifications.map((n) => {
                 const link = getNotificationLink(n, isClient(), isFreelancer());
                 return (
                   <motion.div

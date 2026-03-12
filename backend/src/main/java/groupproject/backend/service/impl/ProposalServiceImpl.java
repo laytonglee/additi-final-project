@@ -13,6 +13,7 @@ import groupproject.backend.request.CreateProposalRequest;
 import groupproject.backend.service.NotificationService;
 import groupproject.backend.service.ProposalService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,7 +50,12 @@ public class ProposalServiceImpl implements ProposalService {
         proposal.setPitchText(request.getPitchText());
         proposal.setOfferedPrice(request.getOfferedPrice());
         proposal.setStatus(ProposalStatus.PENDING);
-        Proposal saved = proposalRepository.save(proposal);
+        Proposal saved;
+        try {
+            saved = proposalRepository.saveAndFlush(proposal);
+        } catch (DataIntegrityViolationException ex) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "You already submitted a proposal");
+        }
 
         // Notify client
         notificationService.create(

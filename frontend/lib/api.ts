@@ -63,17 +63,12 @@ api.interceptors.response.use(
         return api(original);
       } catch (refreshError) {
         processQueue(refreshError);
-        // Both tokens expired — clear auth state and redirect to login
-        if (typeof window !== "undefined") {
-          // Avoid redirect loops on the login/register pages themselves
-          const path = window.location.pathname;
-          if (!path.startsWith("/login") && !path.startsWith("/register")) {
-            // Lazily import store to avoid circular deps at module load time
-            import("@/store/auth").then(({ useAuthStore }) => {
-              useAuthStore.getState().logout();
-            });
-          }
-        }
+        // Both tokens expired — clear auth state only.
+        // useRequireAuth handles redirecting protected pages;
+        // public pages (like /) should stay accessible without a login redirect.
+        import("@/store/auth").then(({ useAuthStore }) => {
+          useAuthStore.setState({ user: null, loading: false });
+        });
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
@@ -239,6 +234,11 @@ export interface AdminUserData {
   avatarUrl: string | null;
 }
 
+export interface CategoryData {
+  id: number;
+  name: string;
+}
+
 export interface UserProfileData {
   id: number;
   name: string;
@@ -302,6 +302,18 @@ export const uploadApi = {
       formData,
     );
   },
+
+  /**
+   * Upload a message attachment (image, PDF, Word, Excel, text) to Cloudflare R2.
+   * Returns the public URL, original file name, and content type.
+   */
+  uploadAttachment: (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return multipartApi.post<
+      ApiResponse<{ url: string; fileName: string; contentType: string }>
+    >("/api/upload/attachment", formData);
+  },
 };
 
 // ── Projects API ──────────────────────────────────
@@ -341,6 +353,9 @@ export const projectApi = {
 
   getById: (id: number) =>
     api.get<ApiResponse<ProjectData>>(`/api/projects/${id}`),
+
+  trackView: (id: number) =>
+    api.post<ApiResponse<void>>(`/api/projects/${id}/view`),
 
   create: (body: {
     title: string;
@@ -458,16 +473,71 @@ export const notificationApi = {
     api.put<ApiResponse<number>>("/api/notifications/read-all"),
 };
 
+// ── Public Stats API ──────────────────────────────
+
+export const statsApi = {
+  get: () => api.get<ApiResponse<AdminStatsData>>("/api/stats"),
+};
+
 // ── Admin API ─────────────────────────────────────
 
 export const adminApi = {
   getUsers: () => api.get<ApiResponse<AdminUserData[]>>("/api/admin/users"),
 
+  searchUsers: (params: {
+    search?: string;
+    role?: string;
+    banned?: boolean;
+    page?: number;
+    size?: number;
+  }) => {
+    const query = new URLSearchParams();
+    if (params.search) query.set("search", params.search);
+    if (params.role) query.set("role", params.role);
+    if (params.banned !== undefined) query.set("banned", String(params.banned));
+    query.set("page", String(params.page ?? 0));
+    query.set("size", String(params.size ?? 10));
+    return api.get<ApiResponse<PageData<AdminUserData>>>(
+      `/api/admin/users/search?${query}`,
+    );
+  },
+
   toggleBan: (userId: number) =>
     api.put<ApiResponse<void>>(`/api/admin/users/${userId}/ban`),
+
+  getProjects: (params: {
+    keyword?: string;
+    status?: string;
+    page?: number;
+    size?: number;
+  }) => {
+    const query = new URLSearchParams();
+    if (params.keyword) query.set("keyword", params.keyword);
+    if (params.status) query.set("status", params.status);
+    query.set("page", String(params.page ?? 0));
+    query.set("size", String(params.size ?? 10));
+    return api.get<ApiResponse<PageData<ProjectData>>>(
+      `/api/admin/projects?${query}`,
+    );
+  },
 
   deleteProject: (projectId: number) =>
     api.delete<ApiResponse<void>>(`/api/admin/projects/${projectId}`),
 
   getStats: () => api.get<ApiResponse<AdminStatsData>>("/api/admin/stats"),
+};
+
+// ── Category API ──────────────────────────────────
+
+export const categoryApi = {
+  getAll: () => api.get<ApiResponse<CategoryData[]>>("/api/categories"),
+
+  create: (name: string) =>
+    api.post<ApiResponse<CategoryData>>("/api/admin/categories", { name }),
+
+  update: (id: number, name: string) =>
+    api.put<ApiResponse<CategoryData>>(`/api/admin/categories/${id}`, { name }),
+
+  delete: (id: number) =>
+    api.delete<ApiResponse<void>>(`/api/admin/categories/${id}`),
 };

@@ -167,7 +167,7 @@ export default function HomePage() {
         </section>
 
         {/* Features */}
-        <section className="py-20 bg-background">
+        <section className="py-16 bg-background">
           <div className="max-w-7xl mx-auto px-4">
             <motion.h2
               className="text-3xl font-bold text-center text-foreground mb-12"
@@ -198,8 +198,8 @@ export default function HomePage() {
                 },
               ].map((f) => (
                 <AnimatedItem key={f.title}>
-                  <Card className="text-center hover:shadow-lg transition-shadow border-border/50 h-full">
-                    <CardHeader className="items-center pt-8">
+                  <Card className="text-center hover:shadow-lg transition-shadow border-border/50 h-full ">
+                    <CardHeader className="items-center py-6 ">
                       <motion.div
                         className="size-14 rounded-full bg-primary/10 flex items-center justify-center mb-2"
                         whileHover={{ scale: 1.1 }}
@@ -221,20 +221,44 @@ export default function HomePage() {
 
         {/* FOR FREELANCERS */}
         <section className="py-24">
-          <div className="max-w-6xl mx-auto px-4 grid md:grid-cols-2 gap-12 items-center">
+          <div className="max-w-6xl mx-auto px-4 grid md:grid-cols-2 gap-16 items-center">
+            {/* Visual Card */}
             <motion.div
-              className="bg-card rounded-xl p-8 shadow-sm"
+              className="bg-card border rounded-2xl p-8 shadow-sm space-y-6"
               variants={fadeUp}
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true }}
+              whileHover={{ y: -4 }}
             >
-              <p className="text-muted-foreground">
-                Build your portfolio, connect with clients, and grow your
-                career.
-              </p>
+              <h3 className="font-semibold text-lg">
+                Why Freelancers Love FreelanceHub
+              </h3>
+
+              <div className="space-y-4 text-sm text-muted-foreground">
+                <div className="flex items-start gap-3">
+                  <CheckCircle className="text-primary size-5 mt-0.5" />
+                  <span>Access projects from clients worldwide</span>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <CheckCircle className="text-primary size-5 mt-0.5" />
+                  <span>Build a professional portfolio</span>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <CheckCircle className="text-primary size-5 mt-0.5" />
+                  <span>Secure payments and contracts</span>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <CheckCircle className="text-primary size-5 mt-0.5" />
+                  <span>Grow your freelance career</span>
+                </div>
+              </div>
             </motion.div>
 
+            {/* Text */}
             <motion.div
               variants={fadeUp}
               initial="hidden"
@@ -242,17 +266,21 @@ export default function HomePage() {
               viewport={{ once: true }}
               custom={0.2}
             >
-              <h2 className="text-3xl font-bold mb-4">
-                Find Your Next Opportunity
+              <h2 className="text-3xl md:text-4xl font-bold mb-4 leading-tight">
+                Find Your Next
+                <span className="text-primary"> Freelance Opportunity</span>
               </h2>
 
-              <p className="text-muted-foreground mb-6">
-                Explore projects that match your skills and start working
-                globally.
+              <p className="text-muted-foreground mb-6 max-w-md">
+                Discover projects that match your expertise and collaborate with
+                clients from around the world.
               </p>
 
-              <Button asChild>
-                <Link href="/projects">Browse Projects</Link>
+              <Button size="lg" asChild>
+                <Link href="/projects">
+                  Browse Projects
+                  <ArrowRight className="ml-2 size-4" />
+                </Link>
               </Button>
             </motion.div>
           </div>
@@ -260,28 +288,47 @@ export default function HomePage() {
 
         {/* CTA */}
         <motion.section
-          className="py-20 bg-muted/50"
+          className="py-12 bg-gradient-to-br from-primary to-primary/80 text-primary-foreground"
           variants={fadeUp}
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true }}
-          custom={0}
         >
           <div className="max-w-3xl mx-auto px-4 text-center">
-            <h2 className="text-3xl font-bold text-foreground mb-4">
-              Ready to get started?
-            </h2>
-            <p className="text-muted-foreground mb-8">
-              Join thousands of clients and freelancers building amazing things
-              together.
-            </p>
+            <motion.h2
+              className="text-3xl md:text-4xl font-bold mb-4"
+              variants={fadeUp}
+              custom={0.1}
+            >
+              Ready to Start Your Freelance Journey?
+            </motion.h2>
+
+            <motion.p
+              className="text-primary-foreground/80 mb-10"
+              variants={fadeUp}
+              custom={0.2}
+            >
+              Join thousands of freelancers and clients collaborating on amazing
+              projects around the world.
+            </motion.p>
+
             {!user && (
               <motion.div
-                whileHover={{ scale: 1.04 }}
-                whileTap={{ scale: 0.97 }}
+                variants={fadeUp}
+                custom={0.3}
+                whileHover={{ scale: 1.06 }}
+                whileTap={{ scale: 0.96 }}
               >
-                <Button size="lg" className="font-semibold" asChild>
-                  <Link href="/register">Create Your Account</Link>
+                <Button
+                  size="lg"
+                  variant="secondary"
+                  className="font-semibold px-8"
+                  asChild
+                >
+                  <Link href="/register">
+                    Create Your Account
+                    <ArrowRight className="ml-2 size-4" />
+                  </Link>
                 </Button>
               </motion.div>
             )}
@@ -289,7 +336,7 @@ export default function HomePage() {
         </motion.section>
 
         {/* Footer */}
-        <footer className="bg-foreground/95 text-background/60 py-8">
+        <footer className="text-black py-8">
           <div className="max-w-7xl mx-auto px-4 text-center text-sm">
             © {new Date().getFullYear()} FreelanceHub. All rights reserved.
           </div>

@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuthStore } from "@/store/auth";
-import { NotificationBell } from "@/components/NotificationBell";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -65,7 +64,7 @@ export function Navbar() {
 
   return (
     <>
-      <nav className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
+      <nav className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-xl supports-backdrop-filter:bg-background/60">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-14 items-center gap-4">
             {/* Logo */}
@@ -126,41 +125,8 @@ export function Navbar() {
 
             {/* Right side */}
             <div className="flex items-center gap-1 shrink-0">
-              {loading ? (
-                <div className="h-8 w-24 bg-muted animate-pulse rounded-lg" />
-              ) : user ? (
+              {user ? (
                 <>
-                  <NotificationBell />
-
-                  {/* Messages icon */}
-                  <Link href="/messages" className="relative">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="relative size-9 rounded-lg"
-                    >
-                      <MessageCircle className="size-4" />
-                      <AnimatePresence>
-                        {unreadMessages > 0 && (
-                          <motion.span
-                            key="badge"
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            exit={{ scale: 0 }}
-                            className="absolute -top-0.5 -right-0.5"
-                          >
-                            <Badge
-                              variant="destructive"
-                              className="size-4 p-0 flex items-center justify-center text-[9px] rounded-full"
-                            >
-                              {unreadMessages > 9 ? "9+" : unreadMessages}
-                            </Badge>
-                          </motion.span>
-                        )}
-                      </AnimatePresence>
-                    </Button>
-                  </Link>
-
                   {/* Avatar dropdown */}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -176,7 +142,7 @@ export function Navbar() {
                             {user.name?.charAt(0).toUpperCase() || "U"}
                           </AvatarFallback>
                         </Avatar>
-                        <span className="hidden sm:inline text-sm font-medium max-w-[100px] truncate">
+                        <span className="hidden sm:inline text-sm font-medium max-w-25 truncate">
                           {user.name}
                         </span>
                       </Button>
@@ -279,7 +245,9 @@ export function Navbar() {
                   </Button>
                 </>
               ) : (
-                <div className="flex items-center gap-2">
+                <div
+                  className={`flex items-center gap-2 transition-opacity${loading ? " opacity-0 pointer-events-none" : ""}`}
+                >
                   <Button
                     variant="ghost"
                     size="sm"

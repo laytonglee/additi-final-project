@@ -15,6 +15,7 @@ public interface ProjectService {
     Project update(Long id, UpdateProjectRequest request, User client);
     void delete(Long id, User user);
     Project getById(Long id);
+    void incrementViewCount(Long id);
     Page<Project> getOpen(Pageable pageable);
     Page<Project> search(String keyword, String category, BigDecimal minBudget, BigDecimal maxBudget,
                          ProjectStatus status, Pageable pageable);

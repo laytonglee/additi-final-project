@@ -52,6 +52,10 @@ public class ProjectServiceImpl implements ProjectService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not your project");
         }
 
+        if (p.getStatus() != ProjectStatus.OPEN) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only open projects can be edited");
+        }
+
         if (request.getTitle() != null) p.setTitle(request.getTitle());
         if (request.getDescription() != null) p.setDescription(request.getDescription());
         if (request.getCategory() != null) p.setCategory(request.getCategory());
@@ -77,17 +81,27 @@ public class ProjectServiceImpl implements ProjectService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not authorized to delete this project");
         }
 
+        if (!isAdmin && p.getStatus() != ProjectStatus.OPEN) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only open projects can be deleted");
+        }
+
         projectRepository.delete(p);
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public Project getById(Long id) {
+        return projectRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Project not found"));
+    }
+
+    @Override
+    @Transactional
+    public void incrementViewCount(Long id) {
         Project p = projectRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Project not found"));
         p.setViewCount(p.getViewCount() + 1);
         projectRepository.save(p);
-        return p;
     }
 
     @Override

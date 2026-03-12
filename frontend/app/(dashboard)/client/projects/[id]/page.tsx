@@ -3,16 +3,34 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { projectApi, proposalApi, ProjectData, ProposalData } from "@/lib/api";
+import { AxiosError } from "axios";
+import {
+  categoryApi,
+  projectApi,
+  proposalApi,
+  CategoryData,
+  ProjectData,
+  ProposalData,
+} from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
 
 import {
   ArrowLeft,
@@ -21,6 +39,7 @@ import {
   CheckCircle,
   Clock,
   DollarSign,
+  Pencil,
   Eye,
   FileText,
   Trash2,
@@ -87,16 +106,32 @@ export default function ClientProjectDetailPage() {
 
   const [project, setProject] = useState<ProjectData | null>(null);
   const [proposals, setProposals] = useState<ProposalData[]>([]);
+  const [categories, setCategories] = useState<CategoryData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [formError, setFormError] = useState("");
+  const [form, setForm] = useState({
+    title: "",
+    description: "",
+    category: "",
+    budgetMin: "",
+    budgetMax: "",
+    deadline: "",
+  });
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await projectApi.getById(projectId);
+        const [res, pRes, cRes] = await Promise.all([
+          projectApi.getById(projectId),
+          proposalApi.getByProject(projectId),
+          categoryApi.getAll(),
+        ]);
         setProject(res.data.data);
-
-        const pRes = await proposalApi.getByProject(projectId);
         setProposals(pRes.data.data);
+        setCategories(cRes.data.data);
       } catch {
         setProject(null);
       } finally {
@@ -108,12 +143,25 @@ export default function ClientProjectDetailPage() {
   }, [projectId]);
 
   const refresh = async () => {
-    const res = await projectApi.getById(projectId);
+    const [res, pRes] = await Promise.all([
+      projectApi.getById(projectId),
+      proposalApi.getByProject(projectId),
+    ]);
     setProject(res.data.data);
-
-    const pRes = await proposalApi.getByProject(projectId);
     setProposals(pRes.data.data);
   };
+
+  useEffect(() => {
+    if (!project) return;
+    setForm({
+      title: project.title,
+      description: project.description ?? "",
+      category: project.category ?? "",
+      budgetMin: String(project.budgetMin ?? ""),
+      budgetMax: String(project.budgetMax ?? ""),
+      deadline: project.deadline ?? "",
+    });
+  }, [project]);
 
   const handleAccept = async (id: number) => {
     await proposalApi.accept(id);
@@ -127,8 +175,55 @@ export default function ClientProjectDetailPage() {
 
   const handleDelete = async () => {
     if (!confirm("Delete this project?")) return;
-    await projectApi.delete(projectId);
-    router.push("/client/projects");
+    setDeleting(true);
+    try {
+      await projectApi.delete(projectId);
+      router.push("/client/projects");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormError("");
+
+    if (!form.title.trim()) {
+      setFormError("Title is required.");
+      return;
+    }
+
+    if (!form.category) {
+      setFormError("Category is required.");
+      return;
+    }
+
+    if (Number(form.budgetMin) > Number(form.budgetMax)) {
+      setFormError("Minimum budget cannot exceed maximum budget.");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await projectApi.update(projectId, {
+        title: form.title.trim(),
+        description: form.description.trim(),
+        category: form.category,
+        budgetMin: Number(form.budgetMin),
+        budgetMax: Number(form.budgetMax),
+        deadline: form.deadline || null,
+      });
+      setEditing(false);
+      await refresh();
+    } catch (error) {
+      const message =
+        error instanceof AxiosError
+          ? (error.response?.data as { message?: string } | undefined)?.message
+          : undefined;
+      setFormError(message ?? "Unable to update this project.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (loading) return <DetailSkeleton />;
@@ -143,6 +238,7 @@ export default function ClientProjectDetailPage() {
   }
 
   const isOwner = user && user.id === project.clientId;
+  const canEdit = Boolean(isOwner && project.status === "OPEN");
 
   return (
     <PageTransition>
@@ -181,34 +277,99 @@ export default function ClientProjectDetailPage() {
                 </div>
               </div>
 
-              {/* RIGHT SIDE BADGES */}
-              <div className="flex gap-2 shrink-0">
-                <Badge variant="secondary">{project.category}</Badge>
+              {/* RIGHT SIDE */}
 
-                <Badge
-                  className={`text-xs border ${STATUS_COLORS[project.status]}`}
-                >
-                  {project.status}
-                </Badge>
+              <div className="flex flex-col items-end gap-3 shrink-0">
+                {isOwner && canEdit ? (
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-2"
+                      onClick={() => {
+                        setEditing((prev) => !prev);
+                        setFormError("");
+                      }}
+                    >
+                      <Pencil className="size-4" />
+                      {editing ? "Cancel" : "Edit"}
+                    </Button>
+
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="gap-2"
+                      onClick={handleDelete}
+                      disabled={deleting}
+                    >
+                      <Trash2 className="size-4" />
+                      {deleting ? "Deleting..." : "Delete"}
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <Badge variant="secondary">{project.category}</Badge>
+
+                    <Badge
+                      className={`text-xs border ${STATUS_COLORS[project.status]}`}
+                    >
+                      {project.status}
+                    </Badge>
+                  </div>
+                )}
               </div>
             </div>
+
+            {/* {isOwner && (
+              <div className="flex flex-wrap gap-2 pt-4 border-t bg-">
+                {canEdit ? (
+                  <>
+                    <Button
+                      variant="outline"
+                      className="gap-2"
+                      onClick={() => {
+                        setEditing((prev) => !prev);
+                        setFormError("");
+                      }}
+                    >
+                      <Pencil className="size-4" />
+                      {editing ? "Cancel Editing" : "Edit Project"}
+                    </Button>
+
+                    <Button
+                      variant="destructive"
+                      className="gap-2"
+                      onClick={handleDelete}
+                      disabled={deleting}
+                    >
+                      <Trash2 className="size-4" />
+                      {deleting ? "Deleting..." : "Delete Project"}
+                    </Button>
+                  </>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Only projects with status OPEN can be edited or deleted.
+                  </p>
+                )}
+              </div>
+            )} */}
 
             {/* STATS */}
 
             <div className="flex flex-wrap justify-between pt-4 border-t gap-y-4">
-              <div className="min-w-[120px]">
+              <div className="min-w-30">
                 <p className="text-xs text-muted-foreground">Budget</p>
                 <p className="font-semibold">
                   {fmt(project.budgetMin)} – {fmt(project.budgetMax)}
                 </p>
               </div>
 
-              <div className="min-w-[120px]">
+              <div className="min-w-30">
                 <p className="text-xs text-muted-foreground">Proposals</p>
                 <p className="font-semibold">{proposals.length}</p>
               </div>
 
-              <div className="min-w-[120px]">
+              <div className="min-w-30">
                 <p className="text-xs text-muted-foreground">Deadline</p>
                 <p className="font-semibold">
                   {project.deadline
@@ -217,13 +378,144 @@ export default function ClientProjectDetailPage() {
                 </p>
               </div>
 
-              <div className="min-w-[120px]">
+              <div className="min-w-30">
                 <p className="text-xs text-muted-foreground">Views</p>
                 <p className="font-semibold">{project.viewCount}</p>
               </div>
             </div>
           </div>
         </motion.div>
+
+        {editing && canEdit && (
+          <Card>
+            <CardContent className="space-y-4 pt-6">
+              <div>
+                <h2 className="text-lg font-semibold">Edit Project</h2>
+                <p className="text-sm text-muted-foreground">
+                  Changes are only allowed while the project is still open.
+                </p>
+              </div>
+
+              <form onSubmit={handleUpdate} className="space-y-4">
+                {formError ? (
+                  <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                    {formError}
+                  </div>
+                ) : null}
+
+                <div className="space-y-2">
+                  <Label htmlFor="title">Project Title</Label>
+                  <Input
+                    id="title"
+                    value={form.title}
+                    onChange={(e) =>
+                      setForm((prev) => ({ ...prev, title: e.target.value }))
+                    }
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    id="description"
+                    rows={5}
+                    className="resize-none"
+                    value={form.description}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        description: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Category</Label>
+                  <Select
+                    value={form.category}
+                    onValueChange={(value) =>
+                      setForm((prev) => ({ ...prev, category: value }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((category) => (
+                        <SelectItem key={category.id} value={category.name}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="budgetMin">Minimum Budget ($)</Label>
+                    <Input
+                      id="budgetMin"
+                      type="number"
+                      min={1}
+                      value={form.budgetMin}
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          budgetMin: e.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="budgetMax">Maximum Budget ($)</Label>
+                    <Input
+                      id="budgetMax"
+                      type="number"
+                      min={1}
+                      value={form.budgetMax}
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          budgetMax: e.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="deadline">Deadline</Label>
+                  <Input
+                    id="deadline"
+                    type="date"
+                    value={form.deadline}
+                    onChange={(e) =>
+                      setForm((prev) => ({ ...prev, deadline: e.target.value }))
+                    }
+                  />
+                </div>
+
+                <div className="flex gap-2">
+                  <Button type="submit" disabled={saving}>
+                    {saving ? "Saving..." : "Save Changes"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setEditing(false);
+                      setFormError("");
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        )}
 
         {/* DESCRIPTION */}
 
@@ -330,8 +622,6 @@ export default function ClientProjectDetailPage() {
             </div>
           </CardContent>
         </Card>
-
-        {/* PROPOSALS */}
       </div>
     </PageTransition>
   );

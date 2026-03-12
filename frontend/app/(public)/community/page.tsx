@@ -252,7 +252,7 @@ export default function CommunityPage() {
               {discussions.map((d) => (
                 <AnimatedItem key={d.id}>
                   <Card className="hover:shadow-sm hover:border-primary/20 transition-all cursor-pointer group">
-                    <CardContent className="py-4">
+                    <CardContent className="">
                       <div className="flex items-start gap-3">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-2">

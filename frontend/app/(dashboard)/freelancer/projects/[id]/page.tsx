@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import { AxiosError } from "axios";
 import { projectApi, proposalApi, ProjectData, ProposalData } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
@@ -99,6 +100,7 @@ export default function FreelancerProjectDetailPage() {
   const [pitch, setPitch] = useState("");
   const [price, setPrice] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   const isOwner = user && project && user.id === project.clientId;
 
@@ -137,6 +139,7 @@ export default function FreelancerProjectDetailPage() {
   const handleSubmitProposal = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
+    setSubmitError("");
 
     try {
       await proposalApi.submit(projectId, {
@@ -147,8 +150,13 @@ export default function FreelancerProjectDetailPage() {
       setPitch("");
       setPrice("");
       await fetchData();
-    } catch {
-      /* ignore */
+    } catch (error) {
+      const message =
+        error instanceof AxiosError
+          ? (error.response?.data as { message?: string } | undefined)?.message
+          : undefined;
+      setSubmitError(message ?? "Unable to submit your proposal right now.");
+      await fetchData();
     } finally {
       setSubmitting(false);
     }
@@ -371,6 +379,12 @@ export default function FreelancerProjectDetailPage() {
                           onSubmit={handleSubmitProposal}
                           className="space-y-4"
                         >
+                          {submitError ? (
+                            <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                              {submitError}
+                            </div>
+                          ) : null}
+
                           <div className="space-y-2">
                             <Label htmlFor="pitch">Cover Letter</Label>
                             <Textarea

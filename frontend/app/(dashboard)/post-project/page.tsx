@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { projectApi } from "@/lib/api";
+import { projectApi, categoryApi, CategoryData } from "@/lib/api";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,15 +26,7 @@ import { AlertCircle, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { PageTransition } from "@/components/PageTransition";
 
-const CATEGORIES = [
-  "Web Development",
-  "Mobile Development",
-  "Design",
-  "Writing",
-  "Marketing",
-  "Data Science",
-  "Other",
-];
+// Categories are fetched dynamically from the API
 
 const fieldVariant = {
   hidden: { opacity: 0, y: 10 },
@@ -46,11 +38,19 @@ export default function PostProjectPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [categories, setCategories] = useState<CategoryData[]>([]);
+
+  useEffect(() => {
+    categoryApi
+      .getAll()
+      .then((res) => setCategories(res.data.data))
+      .catch(() => {});
+  }, []);
 
   const [form, setForm] = useState({
     title: "",
     description: "",
-    category: "Web Development",
+    category: "",
     projectType: "FIXED_PRICE",
     experienceLevel: "INTERMEDIATE",
     budgetMin: "",
@@ -181,9 +181,9 @@ export default function PostProjectPage() {
                       <SelectValue placeholder="Select a category" />
                     </SelectTrigger>
                     <SelectContent>
-                      {CATEGORIES.map((cat) => (
-                        <SelectItem key={cat} value={cat}>
-                          {cat}
+                      {categories.map((cat) => (
+                        <SelectItem key={cat.id} value={cat.name}>
+                          {cat.name}
                         </SelectItem>
                       ))}
                     </SelectContent>

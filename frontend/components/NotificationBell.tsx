@@ -15,6 +15,8 @@ export function NotificationBell() {
   const user = useAuthStore((s) => s.user);
   const loading = useAuthStore((s) => s.loading);
 
+  // Fetch the initial unread count once on mount; real-time updates
+  // come via WebSocket through useNotificationSocket in the layout.
   useEffect(() => {
     if (loading || !user) return;
 
@@ -27,8 +29,6 @@ export function NotificationBell() {
       }
     };
     fetchCount();
-    const interval = setInterval(fetchCount, 30000);
-    return () => clearInterval(interval);
   }, [user, loading, setUnreadCount]);
 
   return (

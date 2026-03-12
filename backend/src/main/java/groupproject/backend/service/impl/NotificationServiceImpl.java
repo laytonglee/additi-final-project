@@ -5,11 +5,13 @@ import groupproject.backend.model.User;
 import groupproject.backend.model.enums.NotificationType;
 import groupproject.backend.model.enums.ReferenceType;
 import groupproject.backend.repository.NotificationRepository;
+import groupproject.backend.response.NotificationResponse;
 import groupproject.backend.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -21,6 +23,7 @@ import java.time.LocalDateTime;
 public class NotificationServiceImpl implements NotificationService {
 
     private final NotificationRepository notificationRepository;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @Override
     @Transactional
@@ -33,7 +36,24 @@ public class NotificationServiceImpl implements NotificationService {
         n.setBody(body);
         n.setReferenceId(referenceId);
         n.setReferenceType(referenceType);
-        return notificationRepository.save(n);
+        Notification saved = notificationRepository.save(n);
+
+        // Push real-time notification to the user's personal queue
+        NotificationResponse payload = NotificationResponse.builder()
+                .id(saved.getId())
+                .type(saved.getType().name())
+                .title(saved.getTitle())
+                .body(saved.getBody())
+                .referenceId(saved.getReferenceId())
+                .referenceType(saved.getReferenceType() != null ? saved.getReferenceType().name() : null)
+                .isRead(false)
+                .readAt(null)
+                .createdAt(saved.getCreatedAt())
+                .build();
+        messagingTemplate.convertAndSend(
+                "/topic/users/" + user.getId() + "/notifications", payload);
+
+        return saved;
     }
 
     @Override

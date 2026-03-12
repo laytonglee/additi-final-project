@@ -95,6 +95,12 @@
             <version>1.0.0</version>
         </dependency>
 
+        <!-- WebSocket (STOMP over WebSocket for real-time messaging) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-websocket</artifactId>
+        </dependency>
+
         <!-- AWS S3 SDK (used for Cloudflare R2 S3-compatible API) -->
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
