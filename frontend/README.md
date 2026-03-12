@@ -1,33 +1,43 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Additi — Frontend
+
+A Next.js 15 frontend for the Additi freelance platform, connecting clients and freelancers.
+
+## Tech Stack
+
+- **Framework**: Next.js 15 (App Router)
+- **Styling**: Tailwind CSS + shadcn/ui
+- **State**: Zustand
+- **Real-time**: STOMP/SockJS WebSocket
+- **HTTP**: Axios with `withCredentials` (HttpOnly cookie auth)
 
 ## Getting Started
 
-First, run the development server:
+Copy the environment file and fill in your values:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.example .env.local
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Then run the development server:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm install
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Open [http://localhost:3000](http://localhost:3000).
 
-## Learn More
+## Environment Variables
 
-To learn more about Next.js, take a look at the following resources:
+| Variable | Description |
+|---|---|
+| `NEXT_PUBLIC_API_URL` | Backend base URL (e.g. `http://localhost:8080`) |
+| `NEXT_PUBLIC_APP_URL` | Frontend base URL |
+| `NEXT_PUBLIC_R2_PUBLIC_URL` | Cloudflare R2 public CDN URL for file attachments |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Deployment
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Deployed on **Vercel**. Set `NEXT_PUBLIC_API_URL` to the production backend URL in your Vercel environment variables.
 
 ## Deploy on Vercel
 
