@@ -31,58 +31,68 @@ const processQueue = (error: unknown | null) => {
   failedQueue = [];
 };
 
-api.interceptors.response.use(
-  (res) => res,
-  async (error) => {
-    const original = error.config;
+const attachRefreshInterceptor = (instance: typeof api) => {
+  instance.interceptors.response.use(
+    (res) => res,
+    async (error) => {
+      const original = error.config;
 
-    const skipRefreshUrls = [
-      "/api/auth/login",
-      "/api/auth/register",
-      "/api/auth/refresh",
-      "/api/auth/logout",
-    ];
-    if (skipRefreshUrls.some((u) => original.url?.startsWith(u))) {
+      // Guard: network errors / cancelled requests have no config
+      if (!original) {
+        return Promise.reject(error);
+      }
+
+      const skipRefreshUrls = [
+        "/api/auth/login",
+        "/api/auth/register",
+        "/api/auth/refresh",
+        "/api/auth/logout",
+      ];
+      if (skipRefreshUrls.some((u) => original.url?.startsWith(u))) {
+        return Promise.reject(error);
+      }
+
+      if (error.response?.status === 401 && !original._retry) {
+        if (isRefreshing) {
+          // Queue this request until the ongoing refresh resolves
+          return new Promise((resolve, reject) => {
+            failedQueue.push({ resolve, reject });
+          }).then(() => {
+            original._retry = true;
+            return instance(original);
+          });
+        }
+
+        original._retry = true;
+        isRefreshing = true;
+
+        try {
+          await api.post("/api/auth/refresh");
+          processQueue(null);
+          return instance(original);
+        } catch (refreshError) {
+          processQueue(refreshError);
+          // Both tokens expired — clear auth state only.
+          import("@/store/auth")
+            .then(({ useAuthStore }) => {
+              const { user, loading } = useAuthStore.getState();
+              if (!loading && !user) {
+                useAuthStore.setState({ user: null, loading: false });
+              }
+            })
+            .catch(() => {});
+          return Promise.reject(refreshError);
+        } finally {
+          isRefreshing = false;
+        }
+      }
       return Promise.reject(error);
-    }
+    },
+  );
+};
 
-    if (error.response?.status === 401 && !original._retry) {
-      if (isRefreshing) {
-        // Queue this request until the ongoing refresh resolves
-        return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
-        }).then(() => api(original));
-      }
-
-      original._retry = true;
-      isRefreshing = true;
-
-      try {
-        await api.post("/api/auth/refresh");
-        processQueue(null);
-        return api(original);
-      } catch (refreshError) {
-        processQueue(refreshError);
-        // Both tokens expired — clear auth state only.
-        // useRequireAuth handles redirecting protected pages;
-        // public pages (like /) should stay accessible without a login redirect.
-        // Only clear if a login is NOT currently in progress (loading=true with no user means
-        // AuthInitializer's initial fetch failed, which is fine to clear).
-        import("@/store/auth").then(({ useAuthStore }) => {
-          const { user, loading } = useAuthStore.getState();
-          // Don't wipe state if login() is in progress (loading=true) or user is already set
-          if (!loading && !user) {
-            useAuthStore.setState({ user: null, loading: false });
-          }
-        });
-        return Promise.reject(refreshError);
-      } finally {
-        isRefreshing = false;
-      }
-    }
-    return Promise.reject(error);
-  },
-);
+attachRefreshInterceptor(api);
+attachRefreshInterceptor(multipartApi);
 
 export default api;
 
@@ -347,8 +357,8 @@ export const projectApi = {
     const query = new URLSearchParams();
     if (params.keyword) query.set("keyword", params.keyword);
     if (params.category) query.set("category", params.category);
-    if (params.minBudget) query.set("minBudget", String(params.minBudget));
-    if (params.maxBudget) query.set("maxBudget", String(params.maxBudget));
+    if (params.minBudget != null) query.set("minBudget", String(params.minBudget));
+    if (params.maxBudget != null) query.set("maxBudget", String(params.maxBudget));
     if (params.status) query.set("status", params.status);
     query.set("page", String(params.page ?? 0));
     query.set("size", String(params.size ?? 10));
