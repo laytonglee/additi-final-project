@@ -5,7 +5,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 const api = axios.create({
   baseURL: API_BASE,
   withCredentials: true,
-  timeout: 15000,
+  timeout: 60000,
   headers: { "Content-Type": "application/json" },
 });
 
@@ -13,7 +13,7 @@ const api = axios.create({
 const multipartApi = axios.create({
   baseURL: API_BASE,
   withCredentials: true,
-  timeout: 30000,
+  timeout: 90000,
 });
 
 // Auto-refresh token on 401 (debounced to prevent spam)
