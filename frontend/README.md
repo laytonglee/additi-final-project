@@ -1,10 +1,10 @@
 # Additi — Frontend
 
-A Next.js 15 frontend for the Additi freelance platform, connecting clients and freelancers.
+A Next.js 17 frontend for the Additi freelance platform, connecting clients and freelancers.
 
 ## Tech Stack
 
-- **Framework**: Next.js 15 (App Router)
+- **Framework**: Next.js 17 (App Router)
 - **Styling**: Tailwind CSS + shadcn/ui
 - **State**: Zustand
 - **Real-time**: STOMP/SockJS WebSocket
@@ -29,10 +29,10 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Environment Variables
 
-| Variable | Description |
-|---|---|
-| `NEXT_PUBLIC_API_URL` | Backend base URL (e.g. `http://localhost:8080`) |
-| `NEXT_PUBLIC_APP_URL` | Frontend base URL |
+| Variable                    | Description                                       |
+| --------------------------- | ------------------------------------------------- |
+| `NEXT_PUBLIC_API_URL`       | Backend base URL (e.g. `http://localhost:8080`)   |
+| `NEXT_PUBLIC_APP_URL`       | Frontend base URL                                 |
 | `NEXT_PUBLIC_R2_PUBLIC_URL` | Cloudflare R2 public CDN URL for file attachments |
 
 ## Deployment
