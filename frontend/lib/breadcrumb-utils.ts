@@ -14,6 +14,7 @@ const labelMap: Record<string, string> = {
   messages: "Messages",
   contracts: "Contracts",
   "post-project": "Post Project",
+  "my-projects": "My Projects",
   projects: "Projects",
   explore: "Explore",
   community: "Community",

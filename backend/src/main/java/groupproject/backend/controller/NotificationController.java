@@ -46,10 +46,10 @@ public class NotificationController {
     }
 
     @PutMapping("/read-all")
-    public ResponseEntity<ApiResponse<Void>> markAllRead(
+    public ResponseEntity<ApiResponse<Integer>> markAllRead(
             @AuthenticationPrincipal User user) {
-        notificationService.markAllAsRead(user.getId());
-        return ResponseEntity.ok(ApiResponse.success(null, "All notifications marked as read"));
+        int updated = notificationService.markAllAsRead(user.getId());
+        return ResponseEntity.ok(ApiResponse.success(updated, "All notifications marked as read"));
     }
 
     private NotificationResponse toResponse(Notification n) {

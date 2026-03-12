@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import {
   contractApi,
   messageApi,
+  uploadApi,
   reviewApi,
   ContractData,
   MessageData,
@@ -13,13 +14,25 @@ import {
 } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { useWebSocket } from "@/hooks/useWebSocket";
+import { useTypingIndicator } from "@/hooks/useTypingIndicator";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CheckCircle, Send, Star } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  CheckCircle,
+  Download,
+  FileText,
+  MessageSquare,
+  Paperclip,
+  Send,
+  Star,
+  X,
+} from "lucide-react";
 import { motion } from "framer-motion";
 import { PageTransition } from "@/components/PageTransition";
 
@@ -34,6 +47,14 @@ export default function ContractDetailPage() {
   const [loading, setLoading] = useState(true);
   const [msgBody, setMsgBody] = useState("");
   const [sending, setSending] = useState(false);
+  const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
+  const [attachmentUrl, setAttachmentUrl] = useState<string | null>(null);
+  const [attachmentContentType, setAttachmentContentType] = useState<
+    string | null
+  >(null);
+  const [uploadingAttachment, setUploadingAttachment] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [completingNote, setCompletingNote] = useState("");
   const [showComplete, setShowComplete] = useState(false);
   const [showReview, setShowReview] = useState(false);
@@ -62,35 +83,95 @@ export default function ContractDetailPage() {
     if (contractId) fetch();
   }, [contractId]);
 
-  useEffect(() => {
-    if (!contractId) return;
-    const interval = setInterval(async () => {
-      try {
-        const mRes = await messageApi.getByContract(contractId, 0, 100);
-        const page = mRes.data.data as PageData<MessageData>;
-        setMessages(page.content);
+  // Real-time messages via WebSocket
+  const handleWsMessage = useCallback(
+    (payload: unknown) => {
+      const msg = payload as MessageData;
+      setMessages((prev) => {
+        // Avoid duplicates (in case the REST response already added it)
+        if (prev.some((m) => m.id === msg.id)) return prev;
+        return [...prev, msg];
+      });
+      // Mark as read if the message is from the other party
+      if (msg.senderId !== user?.id) {
         messageApi.markRead(contractId).catch(() => {});
-      } catch {
-        /* ignore */
       }
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [contractId]);
+    },
+    [contractId, user?.id],
+  );
+
+  useWebSocket({
+    topic: `/topic/contracts/${contractId}/messages`,
+    onMessage: handleWsMessage,
+    enabled: !!contractId && !loading,
+  });
+
+  const { typingUsers, sendTyping } = useTypingIndicator(
+    contractId,
+    !!contractId && !loading,
+  );
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setAttachmentFile(file);
+    setUploadingAttachment(true);
+    try {
+      const res = await uploadApi.uploadAttachment(file);
+      setAttachmentUrl(res.data.data.url);
+      setAttachmentContentType(res.data.data.contentType);
+    } catch {
+      setAttachmentFile(null);
+      setAttachmentUrl(null);
+      setAttachmentContentType(null);
+    } finally {
+      setUploadingAttachment(false);
+      // Reset input so the same file can be re-selected
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const removeAttachment = () => {
+    setAttachmentFile(null);
+    setAttachmentUrl(null);
+    setAttachmentContentType(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleTypingChange = (value: string) => {
+    setMsgBody(value);
+    if (value.length > 0) {
+      sendTyping(true);
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      typingTimeoutRef.current = setTimeout(() => sendTyping(false), 2000);
+    } else {
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      sendTyping(false);
+    }
+  };
+
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!msgBody.trim()) return;
+    if (!msgBody.trim() && !attachmentUrl) return;
     setSending(true);
+    // Stop typing indicator immediately
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    sendTyping(false);
     try {
-      await messageApi.send(contractId, { body: msgBody.trim() });
+      const res = await messageApi.send(contractId, {
+        body: msgBody.trim() || " ",
+        attachmentUrl: attachmentUrl ?? undefined,
+      });
       setMsgBody("");
-      const mRes = await messageApi.getByContract(contractId, 0, 100);
-      const page = mRes.data.data as PageData<MessageData>;
-      setMessages(page.content);
+      removeAttachment();
+      const sent = res.data.data as MessageData;
+      setMessages((prev) =>
+        prev.some((m) => m.id === sent.id) ? prev : [...prev, sent],
+      );
     } catch {
       /* ignore */
     } finally {
@@ -145,7 +226,7 @@ export default function ContractDetailPage() {
 
   return (
     <PageTransition>
-      <div>
+      <div className="overflow-y-hidden">
         {/* Contract Info */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
@@ -208,7 +289,7 @@ export default function ContractDetailPage() {
                         Mark as Completed
                       </Button>
                     ) : (
-                      <div className="w-full bg-green-50 dark:bg-green-950/20 rounded-lg p-4 space-y-3">
+                      <div className="w-full bg-green-50 dark:bg-green-950/20 rounded-lg  space-y-3">
                         <Textarea
                           value={completingNote}
                           onChange={(e) => setCompletingNote(e.target.value)}
@@ -309,53 +390,100 @@ export default function ContractDetailPage() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15, duration: 0.4 }}
+          className="mt-4"
         >
-          <Card className="overflow-hidden">
-            <CardHeader className="bg-muted/50 py-4">
-              <CardTitle className="text-base">Messages</CardTitle>
+          <Card className="overflow-hidden flex flex-col h-[calc(100vh-260px)]">
+            {" "}
+            <CardHeader className="border-b py-3 px-5">
+              <CardTitle className="text-base flex items-center gap-2">
+                <MessageSquare className="size-4" />
+                Messages
+              </CardTitle>
             </CardHeader>
-
             {/* Messages list */}
-            <div className="h-96 overflow-y-auto p-6 space-y-4">
+            <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
+              {" "}
               {messages.length === 0 ? (
                 <div className="text-center text-muted-foreground py-16">
-                  No messages yet. Start the conversation!
+                  <MessageSquare className="size-8 mx-auto mb-3 opacity-30" />
+                  <p className="text-sm">
+                    No messages yet. Start the conversation!
+                  </p>
                 </div>
               ) : (
                 messages.map((msg) => {
                   const isMine = msg.senderId === user?.id;
-                  return (
-                    <div
-                      key={msg.id}
-                      className={`flex ${isMine ? "justify-end" : "justify-start"}`}
-                    >
+                  const time = new Date(msg.createdAt).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  });
+
+                  if (isMine) {
+                    return (
                       <div
-                        className={`max-w-[70%] rounded-2xl px-4 py-2.5 ${
-                          isMine
-                            ? "bg-primary text-primary-foreground rounded-br-md"
-                            : "bg-muted text-foreground rounded-bl-md"
-                        }`}
+                        key={msg.id}
+                        className="flex flex-col items-end gap-1"
                       >
-                        {!isMine && (
-                          <div className="text-xs font-medium mb-1 opacity-70">
-                            {msg.senderName}
-                          </div>
-                        )}
-                        <p className="text-sm whitespace-pre-wrap">
-                          {msg.body}
-                        </p>
-                        <div
-                          className={`text-xs mt-1 ${
-                            isMine
-                              ? "text-primary-foreground/60"
-                              : "text-muted-foreground"
-                          }`}
-                        >
-                          {new Date(msg.createdAt).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
+                        <div className="w-fit max-w-[70%] rounded-2xl rounded-br-sm bg-primary text-primary-foreground px-4 py-2.5 space-y-2">
+                          {msg.body.trim() && (
+                            <p className="text-sm whitespace-pre-wrap">
+                              {msg.body}
+                            </p>
+                          )}
+                          {msg.attachmentUrl && (
+                            <AttachmentBubble
+                              url={msg.attachmentUrl}
+                              fileName={
+                                msg.attachmentUrl.split("/").pop() ?? "file"
+                              }
+                              mine
+                            />
+                          )}
                         </div>
+                        <span className="text-[11px] text-muted-foreground mr-1">
+                          {time}
+                        </span>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div key={msg.id} className="flex items-start gap-2.5">
+                      <Avatar className="size-8 shrink-0 mt-0.5">
+                        {msg.senderAvatarUrl && (
+                          <AvatarImage src={msg.senderAvatarUrl} />
+                        )}
+                        <AvatarFallback className="text-[10px] bg-primary/10 text-primary font-semibold">
+                          {msg.senderName
+                            .split(" ")
+                            .map((w: string) => w[0])
+                            .join("")
+                            .toUpperCase()
+                            .slice(0, 2)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex flex-col gap-1 max-w-[70%]">
+                        <span className="text-xs font-medium text-muted-foreground">
+                          {msg.senderName}
+                        </span>
+                        <div className="w-fit rounded-2xl rounded-bl-sm bg-muted px-4 py-2.5 space-y-2">
+                          {msg.body.trim() && (
+                            <p className="text-sm whitespace-pre-wrap text-foreground">
+                              {msg.body}
+                            </p>
+                          )}
+                          {msg.attachmentUrl && (
+                            <AttachmentBubble
+                              url={msg.attachmentUrl}
+                              fileName={
+                                msg.attachmentUrl.split("/").pop() ?? "file"
+                              }
+                            />
+                          )}
+                        </div>
+                        <span className="text-[11px] text-muted-foreground ml-1">
+                          {time}
+                        </span>
                       </div>
                     </div>
                   );
@@ -363,31 +491,149 @@ export default function ContractDetailPage() {
               )}
               <div ref={messagesEndRef} />
             </div>
+            {/* Message input or disabled footer */}
+            {contract.status === "ACTIVE" ? (
+              <div className="border-t px-4 py-3 space-y-2">
+                {/* Attachment preview chip */}
+                {attachmentFile && (
+                  <div className="flex items-center gap-2 bg-muted/60 rounded-lg px-3 py-1.5 text-sm">
+                    {attachmentFile.type.startsWith("image/") ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={URL.createObjectURL(attachmentFile)}
+                        alt="preview"
+                        className="size-8 rounded object-cover shrink-0"
+                      />
+                    ) : (
+                      <FileText className="size-4 shrink-0 text-muted-foreground" />
+                    )}
+                    <span className="flex-1 truncate text-foreground/70 text-xs">
+                      {attachmentFile.name}
+                    </span>
+                    {uploadingAttachment ? (
+                      <span className="text-xs text-muted-foreground animate-pulse">
+                        Uploading…
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={removeAttachment}
+                        className="text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        <X className="size-3.5" />
+                      </button>
+                    )}
+                  </div>
+                )}
 
-            {/* Message input */}
-            {contract.status === "ACTIVE" && (
-              <form
-                onSubmit={handleSend}
-                className="border-t px-4 py-3 flex gap-3"
-              >
-                <Input
-                  value={msgBody}
-                  onChange={(e) => setMsgBody(e.target.value)}
-                  placeholder="Type a message…"
-                  className="flex-1"
-                />
-                <Button
-                  type="submit"
-                  disabled={sending || !msgBody.trim()}
-                  size="icon"
-                >
-                  <Send className="size-4" />
-                </Button>
-              </form>
+                {/* Typing indicator */}
+                {typingUsers.length > 0 && (
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground px-1">
+                    <span className="flex gap-0.5">
+                      <span className="w-1.5 h-1.5 bg-muted-foreground/60 rounded-full animate-bounce [animation-delay:0ms]" />
+                      <span className="w-1.5 h-1.5 bg-muted-foreground/60 rounded-full animate-bounce [animation-delay:150ms]" />
+                      <span className="w-1.5 h-1.5 bg-muted-foreground/60 rounded-full animate-bounce [animation-delay:300ms]" />
+                    </span>
+                    <span>
+                      {typingUsers.map((u) => u.userName).join(", ")}{" "}
+                      {typingUsers.length === 1 ? "is" : "are"} typing…
+                    </span>
+                  </div>
+                )}
+
+                {/* Input row */}
+                <form onSubmit={handleSend} className="flex gap-2 items-center">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    className="hidden"
+                    accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
+                    onChange={handleFileSelect}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="text-muted-foreground hover:text-foreground transition-colors shrink-0"
+                    title="Attach file"
+                  >
+                    <Paperclip className="size-4" />
+                  </button>
+                  <Input
+                    value={msgBody}
+                    onChange={(e) => handleTypingChange(e.target.value)}
+                    onBlur={() => sendTyping(false)}
+                    placeholder="Type a message…"
+                    className="flex-1"
+                  />
+                  <Button
+                    type="submit"
+                    disabled={
+                      sending ||
+                      (!msgBody.trim() && !attachmentUrl) ||
+                      uploadingAttachment
+                    }
+                    size="icon"
+                  >
+                    <Send className="size-4" />
+                  </Button>
+                </form>
+              </div>
+            ) : (
+              <div className="border-t px-4 py-3 text-center">
+                <p className="text-sm text-muted-foreground">
+                  This contract is{" "}
+                  {contract.status.toLowerCase().replace("_", " ")} — messaging
+                  is disabled.
+                </p>
+              </div>
             )}
           </Card>
         </motion.div>
       </div>
     </PageTransition>
+  );
+}
+
+// ─────────────────────────────────────────────────
+// AttachmentBubble — renders a file attachment inline
+// ─────────────────────────────────────────────────
+function AttachmentBubble({
+  url,
+  fileName,
+  mine = false,
+}: {
+  url: string;
+  fileName: string;
+  mine?: boolean;
+}) {
+  const isImage = /\.(jpe?g|png|gif|webp|svg)$/i.test(url);
+
+  if (isImage) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={url}
+        alt={fileName}
+        className="max-w-50 rounded-lg object-cover cursor-pointer"
+        onClick={() => window.open(url, "_blank")}
+      />
+    );
+  }
+
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-colors ${
+        mine
+          ? "bg-primary-foreground/10 hover:bg-primary-foreground/20 text-primary-foreground"
+          : "bg-background hover:bg-muted-foreground/10 text-foreground"
+      }`}
+    >
+      <FileText className="size-4 shrink-0" />
+      <span className="max-w-37.5 truncate">{fileName}</span>
+      <Download className="size-3.5 shrink-0 opacity-70" />
+    </a>
   );
 }

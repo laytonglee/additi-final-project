@@ -2,7 +2,13 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { projectApi, ProjectData, PageData } from "@/lib/api";
+import {
+  projectApi,
+  categoryApi,
+  ProjectData,
+  CategoryData,
+  PageData,
+} from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -45,15 +51,7 @@ import { PageTransition } from "@/components/PageTransition";
 
 // ── Constants ──────────────────────────────────────────────────────────────
 
-const CATEGORIES = [
-  "Web Development",
-  "Mobile Development",
-  "Design",
-  "Writing",
-  "Marketing",
-  "Data Science",
-  "Other",
-];
+// Categories are fetched dynamically from the API
 
 const STATUS_OPTIONS = [
   { value: "OPEN", label: "Open" },
@@ -225,7 +223,7 @@ function ListCard({ project }: { project: ProjectData }) {
   return (
     <Link href={`/projects/${project.id}`}>
       <Card className="hover:shadow-md hover:border-primary/40 transition-all cursor-pointer group">
-        <CardContent className="p-4">
+        <CardContent className="">
           <div className="flex gap-4 items-start">
             <div className="flex-1 min-w-0 space-y-1">
               <div className="flex flex-wrap items-center gap-2">
@@ -309,6 +307,7 @@ function FilterChip({
 
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<ProjectData[]>([]);
+  const [categories, setCategories] = useState<CategoryData[]>([]);
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
@@ -354,6 +353,13 @@ export default function ProjectsPage() {
   useEffect(() => {
     doFetch(applied, page);
   }, [applied, page, doFetch]);
+
+  useEffect(() => {
+    categoryApi
+      .getAll()
+      .then((res) => setCategories(res.data.data))
+      .catch(() => {});
+  }, []);
 
   // ── Handlers ─────────────────────────────────────────────────────────────
 
@@ -553,9 +559,9 @@ export default function ProjectsPage() {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="all">Any</SelectItem>
-                          {CATEGORIES.map((c) => (
-                            <SelectItem key={c} value={c}>
-                              {c}
+                          {categories.map((c) => (
+                            <SelectItem key={c.id} value={c.name}>
+                              {c.name}
                             </SelectItem>
                           ))}
                         </SelectContent>

@@ -185,19 +185,35 @@ export default function ExplorePage() {
     <PageTransition>
       <div className="max-w-7xl mx-auto px-4 py-10 space-y-14">
         {/* Hero */}
-        <div className="text-center space-y-5">
+        <div className="relative overflow-hidden rounded-2xl bg-linear-to-br from-primary/15 via-primary/5 to-transparent border border-primary/20 px-8 py-12 text-center">
           <motion.div
-            initial={{ opacity: 0, y: -10 }}
+            className="absolute -top-12 -right-12 size-48 bg-primary/10 rounded-full blur-3xl"
+            animate={{ scale: [1, 1.15, 1] }}
+            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+          />
+          <motion.div
+            className="absolute -bottom-8 -left-8 size-36 bg-primary/8 rounded-full blur-2xl"
+            animate={{ scale: [1, 1.2, 1] }}
+            transition={{
+              duration: 7,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: 1,
+            }}
+          />
+
+          <motion.div
+            className="relative inline-flex items-center gap-2 bg-primary/10 text-primary rounded-full px-4 py-1.5 text-sm font-medium mb-5"
+            initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
-            className="inline-flex items-center gap-2 bg-primary/10 text-primary rounded-full px-4 py-1.5 text-sm font-medium"
           >
             <Sparkles className="size-3.5" />
-            Discover what's trending
+            Discover projects, skills, and talent
           </motion.div>
 
           <motion.h1
-            className="text-4xl sm:text-5xl font-bold text-foreground leading-tight"
+            className="relative text-4xl sm:text-5xl font-bold text-foreground mb-4 leading-tight"
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1, duration: 0.45 }}
@@ -206,26 +222,43 @@ export default function ExplorePage() {
           </motion.h1>
 
           <motion.p
-            className="text-muted-foreground text-lg max-w-xl mx-auto"
+            className="relative text-muted-foreground text-lg max-w-xl mx-auto mb-7"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.25, duration: 0.4 }}
           >
-            Browse trending projects, discover top talent, and find your next
-            big opportunity.
+            Browse trending projects, discover standout freelancers, and find
+            the next opportunity worth chasing.
           </motion.p>
 
-          {/* Search bar */}
           <motion.div
-            className="max-w-lg mx-auto relative"
+            className="relative flex justify-center gap-3 mb-6"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, duration: 0.35 }}
+          >
+            <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}>
+              <Button asChild size="lg">
+                <Link href="/projects">Browse All Projects</Link>
+              </Button>
+            </motion.div>
+            <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}>
+              <Button asChild size="lg" variant="outline">
+                <Link href="/register">Join as Freelancer</Link>
+              </Button>
+            </motion.div>
+          </motion.div>
+
+          <motion.div
+            className="relative max-w-lg mx-auto"
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.35, duration: 0.4 }}
+            transition={{ delay: 0.5, duration: 0.4 }}
           >
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <Input
-              className="pl-10 h-11 rounded-xl"
-              placeholder="Search projects or skills…"
+              className="pl-10 h-11 rounded-xl bg-background/80"
+              placeholder="Search projects or skills..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -271,7 +304,7 @@ export default function ExplorePage() {
                   href={`/projects?category=${encodeURIComponent(cat.label)}`}
                 >
                   <Card className="hover:shadow-md hover:border-primary/30 transition-all cursor-pointer group">
-                    <CardContent className="p-4 text-center">
+                    <CardContent className=" text-center">
                       <div
                         className={`size-10 rounded-lg ${cat.color} flex items-center justify-center mx-auto mb-2 transition-transform group-hover:scale-110`}
                       >
@@ -347,7 +380,7 @@ export default function ExplorePage() {
                   >
                     <Link href="/projects">
                       <Card className="h-full hover:shadow-md hover:border-primary/30 transition-all cursor-pointer">
-                        <CardContent className="pt-5 pb-4">
+                        <CardContent className="">
                           <div className="flex items-start justify-between gap-2 mb-3">
                             <Badge
                               variant="secondary"

@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { notificationApi, NotificationData, PageData } from "@/lib/api";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { useNotificationStore } from "@/store/notifications";
+import { useAuthStore } from "@/store/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -11,11 +13,19 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { PageTransition } from "@/components/PageTransition";
 
-function getNotificationLink(n: NotificationData): string | null {
+function getNotificationLink(
+  n: NotificationData,
+  isClient: boolean,
+  isFreelancer: boolean,
+): string | null {
   const { referenceType, referenceId, type } = n;
   if (type === "NEW_MESSAGE" || referenceType === "MESSAGE") return "/messages";
   if (referenceType === "CONTRACT") return `/contracts/${referenceId}`;
-  if (referenceType === "PROJECT") return `/projects/${referenceId}`;
+  if (referenceType === "PROJECT") {
+    if (isClient) return `/client/projects/${referenceId}`;
+    if (isFreelancer) return `/freelancer/projects/${referenceId}`;
+    return `/projects/${referenceId}`;
+  }
   if (referenceType === "PROPOSAL") return "/messages";
   return null;
 }
@@ -23,25 +33,41 @@ function getNotificationLink(n: NotificationData): string | null {
 export default function NotificationsPage() {
   useRequireAuth();
   const router = useRouter();
+  const { isClient, isFreelancer } = useAuthStore();
   const [notifications, setNotifications] = useState<NotificationData[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
+  const unreadCount = useNotificationStore((s) => s.unreadCount);
+  const setUnreadCount = useNotificationStore((s) => s.setUnreadCount);
+  const decrementUnread = useNotificationStore((s) => s.decrementUnread);
+  const realtimeQueue = useNotificationStore((s) => s.realtimeQueue);
+  const clearQueue = useNotificationStore((s) => s.clearQueue);
 
   const fetchData = async (p = 0) => {
     setLoading(true);
     try {
-      const res = await notificationApi.getAll(p, 20);
+      const res = await notificationApi.getAll(p, 6);
       const data = res.data.data as PageData<NotificationData>;
       setNotifications(data.content);
       setTotalPages(data.totalPages);
       setPage(data.number);
+      // After fetching, clear the real-time queue since we have fresh data
+      clearQueue();
     } catch {
       /* ignore */
     } finally {
       setLoading(false);
     }
   };
+
+  // Merge real-time notifications on top when viewing page 0
+  const displayedNotifications = useMemo(() => {
+    if (page !== 0 || realtimeQueue.length === 0) return notifications;
+    const existingIds = new Set(notifications.map((n) => n.id));
+    const newOnes = realtimeQueue.filter((n) => !existingIds.has(n.id));
+    return [...newOnes, ...notifications];
+  }, [notifications, realtimeQueue, page]);
 
   useEffect(() => {
     fetchData();
@@ -53,6 +79,7 @@ export default function NotificationsPage() {
       setNotifications((prev) =>
         prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)),
       );
+      decrementUnread();
     } catch {
       /* ignore */
     }
@@ -60,14 +87,16 @@ export default function NotificationsPage() {
 
   const handleNotificationClick = async (n: NotificationData) => {
     if (!n.isRead) await handleMarkRead(n.id);
-    const link = getNotificationLink(n);
+    const link = getNotificationLink(n, isClient(), isFreelancer());
     if (link) router.push(link);
   };
 
   const handleMarkAllRead = async () => {
     try {
       await notificationApi.markAllRead();
-      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+      setUnreadCount(0);
+      // Re-fetch the current page so all cards reflect the updated isRead state
+      await fetchData(page);
     } catch {
       /* ignore */
     }
@@ -90,7 +119,7 @@ export default function NotificationsPage() {
 
   return (
     <PageTransition>
-      <div className="max-w-3xl mx-auto px-4 py-8">
+      <div className="max-w-3xl mx-auto ">
         <motion.div
           className="flex justify-between items-center mb-8"
           initial={{ opacity: 0, y: -12 }}
@@ -98,7 +127,7 @@ export default function NotificationsPage() {
           transition={{ duration: 0.4 }}
         >
           <h1 className="text-3xl font-bold text-foreground">Notifications</h1>
-          {notifications.some((n) => !n.isRead) && (
+          {unreadCount > 0 && (
             <Button variant="ghost" size="sm" onClick={handleMarkAllRead}>
               Mark all as read
             </Button>
@@ -116,7 +145,7 @@ export default function NotificationsPage() {
               </Card>
             ))}
           </div>
-        ) : notifications.length === 0 ? (
+        ) : displayedNotifications.length === 0 ? (
           <motion.div
             className="text-center py-20 text-muted-foreground"
             initial={{ opacity: 0 }}
@@ -135,8 +164,8 @@ export default function NotificationsPage() {
             }}
           >
             <AnimatePresence>
-              {notifications.map((n) => {
-                const link = getNotificationLink(n);
+              {displayedNotifications.map((n) => {
+                const link = getNotificationLink(n, isClient(), isFreelancer());
                 return (
                   <motion.div
                     key={n.id}
@@ -156,7 +185,7 @@ export default function NotificationsPage() {
                         link ? "cursor-pointer" : "cursor-default"
                       } ${!n.isRead ? "border-primary/30 bg-primary/5" : ""}`}
                     >
-                      <CardContent className="py-4">
+                      <CardContent className="">
                         <div className="flex items-start gap-3">
                           <span className="text-xl">
                             {getIconForType(n.type)}

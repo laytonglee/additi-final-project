@@ -49,7 +49,7 @@ export default function MessagesPage() {
 
   return (
     <PageTransition>
-      <div className="max-w-2xl mx-auto px-4 py-8">
+      <div className="max-w-2xl mx-auto ">
         {/* Header */}
         <motion.div
           className="flex items-center justify-between mb-6"
@@ -129,7 +129,7 @@ export default function MessagesPage() {
               >
                 <Link href={`/contracts/${conv.contractId}`} className="block">
                   <Card className="hover:bg-muted/50 transition-colors cursor-pointer">
-                    <CardContent className="p-4 flex items-center gap-4">
+                    <CardContent className="flex items-center gap-4">
                       <div className="relative shrink-0">
                         <Avatar className="size-12">
                           {conv.otherUserAvatarUrl && (
@@ -158,9 +158,18 @@ export default function MessagesPage() {
                           >
                             {conv.otherUserName}
                           </span>
-                          <span className="text-xs text-muted-foreground shrink-0">
-                            {timeAgo(conv.lastMessageAt)}
-                          </span>
+
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className="text-xs text-muted-foreground">
+                              {timeAgo(conv.lastMessageAt)}
+                            </span>
+
+                            {conv.contractStatus === "COMPLETED" && (
+                              <Badge variant="secondary" className="text-xs">
+                                Completed
+                              </Badge>
+                            )}
+                          </div>
                         </div>
                         <p className="text-xs text-muted-foreground truncate mt-0.5">
                           📁 {conv.projectTitle}
@@ -184,12 +193,6 @@ export default function MessagesPage() {
                           className="shrink-0 rounded-full px-2 py-0.5 text-xs"
                         >
                           {conv.unreadCount}
-                        </Badge>
-                      )}
-
-                      {conv.contractStatus === "COMPLETED" && (
-                        <Badge variant="secondary" className="shrink-0 text-xs">
-                          Completed
                         </Badge>
                       )}
                     </CardContent>
