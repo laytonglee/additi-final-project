@@ -10,10 +10,12 @@ import groupproject.backend.repository.MessageRepository;
 import groupproject.backend.request.SendMessageRequest;
 import groupproject.backend.service.MessageService;
 import groupproject.backend.service.NotificationService;
+import groupproject.backend.response.MessageResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -25,6 +27,7 @@ public class MessageServiceImpl implements MessageService {
     private final MessageRepository messageRepository;
     private final ContractRepository contractRepository;
     private final NotificationService notificationService;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @Override
     public Page<Message> getByContract(Long contractId, User user, Pageable pageable) {
@@ -49,6 +52,25 @@ public class MessageServiceImpl implements MessageService {
         msg.setBody(request.getBody());
         msg.setAttachmentUrl(request.getAttachmentUrl());
         Message saved = messageRepository.save(msg);
+
+        // Build response DTO for WebSocket broadcast
+        MessageResponse wsPayload = MessageResponse.builder()
+                .id(saved.getId())
+                .threadId(saved.getThreadId())
+                .contractId(saved.getContract().getId())
+                .senderId(saved.getSender().getId())
+                .senderName(saved.getSender().getRealName())
+                .senderAvatarUrl(saved.getSender().getAvatarUrl())
+                .receiverId(saved.getReceiver().getId())
+                .body(saved.getBody())
+                .attachmentUrl(saved.getAttachmentUrl())
+                .isRead(saved.isRead())
+                .readAt(saved.getReadAt())
+                .createdAt(saved.getCreatedAt())
+                .build();
+
+        // Broadcast to the contract's chat topic so both parties receive it in real time
+        messagingTemplate.convertAndSend("/topic/contracts/" + contractId + "/messages", wsPayload);
 
         notificationService.create(
                 receiver,

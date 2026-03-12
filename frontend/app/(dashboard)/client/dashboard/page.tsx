@@ -7,10 +7,24 @@ import { useAuthStore } from "@/store/auth";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+} from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, FolderOpen, Clock, CheckCircle, FileText } from "lucide-react";
+import {
+  Plus,
+  FolderOpen,
+  Clock,
+  CheckCircle,
+  FileText,
+  Briefcase,
+  XCircle,
+  ArrowRight,
+} from "lucide-react";
 import { motion } from "framer-motion";
 import { PageTransition } from "@/components/PageTransition";
 import { AnimatedList, AnimatedItem } from "@/components/AnimatedList";
@@ -18,6 +32,56 @@ import { AnimatedList, AnimatedItem } from "@/components/AnimatedList";
 const listItemVariant = {
   hidden: { opacity: 0, y: 12 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+};
+
+const formatBudget = (val: number) =>
+  val >= 1000
+    ? `$${(val / 1000).toFixed(val % 1000 === 0 ? 0 : 1)}k`
+    : `$${val}`;
+/* ── Stat card ────────────────────────────────── */
+function StatCard({
+  title,
+  value,
+  icon,
+}: {
+  title: string;
+  value: string | number;
+  icon: React.ReactNode;
+}) {
+  return (
+    <Card className="rounded-2xl">
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardDescription>{title}</CardDescription>
+        {icon}
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold">{value}</div>
+      </CardContent>
+    </Card>
+  );
+}
+
+const STATUS_COLORS: Record<string, string> = {
+  OPEN: "bg-emerald-500/10 text-emerald-600 border-emerald-200",
+  IN_PROGRESS: "bg-blue-500/10 text-blue-600 border-blue-200",
+  COMPLETED: "bg-gray-500/10 text-gray-500 border-gray-200",
+  CANCELLED: "bg-red-500/10 text-red-500 border-red-200",
+};
+const STATUS_ICONS: Record<string, React.ElementType> = {
+  OPEN: FolderOpen,
+  IN_PROGRESS: Clock,
+  COMPLETED: CheckCircle,
+  CANCELLED: XCircle,
+};
+
+const timeAgo = (dateStr: string) => {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const days = Math.floor(diff / 86400000);
+  if (days === 0) return "Today";
+  if (days === 1) return "Yesterday";
+  if (days < 7) return `${days}d ago`;
+  if (days < 30) return `${Math.floor(days / 7)}w ago`;
+  return `${Math.floor(days / 30)}mo ago`;
 };
 
 export default function ClientDashboardPage() {
@@ -31,13 +95,10 @@ export default function ClientDashboardPage() {
     const fetch = async () => {
       try {
         const [projRes, contRes] = await Promise.all([
-          projectApi.getAll(0, 50),
+          projectApi.getMy(0, 50),
           contractApi.getMy(),
         ]);
-        const ownProjects = projRes.data.data.content.filter(
-          (p) => p.clientId === user?.id,
-        );
-        setProjects(ownProjects);
+        setProjects(projRes.data.data.content);
         setContracts(contRes.data.data);
       } catch {
         /* ignore */
@@ -55,12 +116,77 @@ export default function ClientDashboardPage() {
     activeContracts: contracts.filter((c) => c.status === "ACTIVE").length,
   };
 
+  const STATUS_ICONS: Record<string, React.ElementType> = {
+    OPEN: FolderOpen,
+    IN_PROGRESS: Clock,
+    COMPLETED: CheckCircle,
+    CANCELLED: XCircle,
+  };
+
+  function ProjectRowCard({ project }: { project: ProjectData }) {
+    const StatusIcon = STATUS_ICONS[project.status] || FolderOpen;
+    return (
+      <Link href={`/client/projects/${project.id}`}>
+        <Card className="hover:shadow-md hover:border-primary/30 transition-all cursor-pointer group">
+          <CardContent>
+            <div className="flex items-center justify-between gap-4">
+              {/* Left: info */}
+              <div className="min-w-0 flex-1">
+                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors truncate text-base">
+                  {project.title}
+                </h3>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground mt-1.5">
+                  <span className="font-semibold text-foreground">
+                    {formatBudget(project.budgetMin)} –{" "}
+                    {formatBudget(project.budgetMax)}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Briefcase className="size-3" />
+                    {project.proposalCount} proposals
+                  </span>
+                  <span className="hidden sm:inline">
+                    Posted {timeAgo(project.createdAt)}
+                  </span>
+                  <Badge variant="secondary">{project.category}</Badge>
+                </div>
+              </div>
+
+              {/* Right: status + arrow */}
+              <div className="flex items-center gap-3 shrink-0">
+                <Badge className={STATUS_COLORS[project.status]}>
+                  <StatusIcon className="size-3 mr-1" />
+                  {project.status.replace("_", " ")}
+                </Badge>
+                <ArrowRight className="size-4 text-muted-foreground opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </Link>
+    );
+  }
+
+  /* ── Empty state ──────────────────────────────── */
+  function EmptyState({ message }: { message: string }) {
+    return (
+      <div className="text-center py-20 text-muted-foreground">
+        <Briefcase className="mx-auto size-12 mb-4 opacity-30" />
+        <p>{message}</p>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
-      <div>
+      <div className="w-full space-y-6">
         <Skeleton className="h-8 w-1/3" />
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-24 rounded-xl" />
+          ))}
+        </div>
+        <div className="space-y-3">
+          {Array.from({ length: 3 }).map((_, i) => (
             <Skeleton key={i} className="h-24 rounded-xl" />
           ))}
         </div>
@@ -119,21 +245,11 @@ export default function ClientDashboardPage() {
             },
           ].map((s) => (
             <AnimatedItem key={s.label}>
-              <Card className="h-full">
-                <CardContent className="pt-6">
-                  <div className="flex items-center gap-3">
-                    <s.icon className={`size-5 ${s.color}`} />
-                    <div>
-                      <div className={`text-2xl font-bold ${s.color}`}>
-                        {s.value}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        {s.label}
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <StatCard
+                title={s.label}
+                value={s.value}
+                icon={<s.icon className={`size-5 ${s.color}`} />}
+              />
             </AnimatedItem>
           ))}
         </AnimatedList>
@@ -152,49 +268,12 @@ export default function ClientDashboardPage() {
 
             <TabsContent value="projects" className="mt-4">
               {projects.length === 0 ? (
-                <div className="text-center py-16 text-muted-foreground">
-                  <p className="mb-4">
-                    You haven&apos;t posted any projects yet.
-                  </p>
-                  <Button variant="link" asChild>
-                    <Link href="/post-project">Post your first project →</Link>
-                  </Button>
-                </div>
+                <EmptyState message="No projects yet. Post your first project!" />
               ) : (
                 <AnimatedList className="space-y-3">
                   {projects.map((p) => (
                     <AnimatedItem key={p.id}>
-                      <Link href={`/projects/${p.id}`}>
-                        <Card className="hover:shadow-md transition-shadow cursor-pointer">
-                          <CardContent className="py-4">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <h3 className="font-semibold text-foreground">
-                                  {p.title}
-                                </h3>
-                                <div className="text-sm text-muted-foreground mt-1">
-                                  {p.category} · ${p.budgetMin}–${p.budgetMax} ·{" "}
-                                  {p.proposalCount} proposals
-                                </div>
-                              </div>
-                              <Badge
-                                variant={
-                                  p.status === "OPEN" ? "default" : "secondary"
-                                }
-                                className={
-                                  p.status === "OPEN"
-                                    ? "bg-green-600 hover:bg-green-600"
-                                    : p.status === "IN_PROGRESS"
-                                      ? "bg-yellow-600 hover:bg-yellow-600 text-white"
-                                      : ""
-                                }
-                              >
-                                {p.status}
-                              </Badge>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      </Link>
+                      <ProjectRowCard project={p} />
                     </AnimatedItem>
                   ))}
                 </AnimatedList>
@@ -212,7 +291,7 @@ export default function ClientDashboardPage() {
                     <AnimatedItem key={c.id}>
                       <Link href={`/contracts/${c.id}`}>
                         <Card className="hover:shadow-md transition-shadow cursor-pointer">
-                          <CardContent className="py-4">
+                          <CardContent className="">
                             <div className="flex items-center justify-between">
                               <div>
                                 <h3 className="font-semibold text-foreground">

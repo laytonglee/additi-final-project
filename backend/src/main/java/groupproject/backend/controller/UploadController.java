@@ -65,4 +65,53 @@ public class UploadController {
                     .body(ApiResponse.error("Upload failed: " + e.getMessage()));
         }
     }
+
+    /**
+     * Upload a message attachment (image, PDF, Word, Excel, or plain text) to Cloudflare R2.
+     * Returns the public URL, original file name, and content type.
+     */
+    @PostMapping(value = "/attachment", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<Map<String, String>>> uploadAttachment(
+            @RequestParam("file") MultipartFile file) {
+
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("No file provided"));
+        }
+
+        // Validate file size (max 10 MB)
+        if (file.getSize() > 10L * 1024 * 1024) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("File size must not exceed 10 MB"));
+        }
+
+        String contentType = file.getContentType();
+        if (contentType == null || !isAllowedAttachmentType(contentType)) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error(
+                            "File type not allowed. Supported: images, PDF, Word, Excel, text"));
+        }
+
+        try {
+            String url = r2StorageService.upload(file, "attachments");
+            String originalName = file.getOriginalFilename() != null
+                    ? file.getOriginalFilename() : "file";
+            return ResponseEntity.ok(ApiResponse.success(
+                    Map.of("url", url, "fileName", originalName, "contentType", contentType),
+                    "Attachment uploaded successfully"));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError()
+                    .body(ApiResponse.error("Upload failed: " + e.getMessage()));
+        }
+    }
+
+    private boolean isAllowedAttachmentType(String contentType) {
+        return contentType.startsWith("image/")
+                || contentType.equals("application/pdf")
+                || contentType.equals("application/msword")
+                || contentType.equals("application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+                || contentType.equals("application/vnd.ms-excel")
+                || contentType.equals("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                || contentType.startsWith("text/");
+    }
 }

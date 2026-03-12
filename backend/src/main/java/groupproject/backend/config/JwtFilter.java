@@ -1,6 +1,7 @@
 package groupproject.backend.config;
 
 import groupproject.backend.service.JwtService;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -88,8 +89,8 @@ public class JwtFilter extends OncePerRequestFilter {
                     SecurityContextHolder.getContext()
                             .setAuthentication(authToken);
                 }
-            } catch (UsernameNotFoundException e) {
-                // User no longer exists (e.g. email was changed) – skip authentication
+            } catch (UsernameNotFoundException | JwtException e) {
+                // Expired/invalid token or user no longer exists – skip authentication
             }
         }
 

@@ -94,17 +94,19 @@ export default function FreelancerDashboardPage() {
 
   return (
     <PageTransition>
-      <div className="w-full">
+      <div>
         <motion.div
           className="flex justify-between items-center mb-8"
           initial={{ opacity: 0, y: -12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
         >
-          <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
+          <h1 className="text-3xl font-bold text-foreground">
+            Freelancer Dashboard here
+          </h1>
           <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}>
             <Button asChild>
-              <Link href="/projects">
+              <Link href="/freelancer/projects">
                 <Search className="mr-2 size-4" />
                 Browse Projects
               </Link>
@@ -156,16 +158,18 @@ export default function FreelancerDashboardPage() {
                 <div className="text-center py-16 text-muted-foreground">
                   <p className="mb-4">No proposals yet.</p>
                   <Button variant="link" asChild>
-                    <Link href="/projects">Find projects to bid on →</Link>
+                    <Link href="/freelancer/projects">
+                      Find projects to bid on →
+                    </Link>
                   </Button>
                 </div>
               ) : (
                 <AnimatedList className="space-y-3">
                   {proposals.map((p) => (
                     <AnimatedItem key={p.id}>
-                      <Link href={`/projects/${p.projectId}`}>
+                      <Link href={`/freelancer/projects/${p.projectId}`}>
                         <Card className="hover:shadow-md transition-shadow cursor-pointer">
-                          <CardContent className="py-4">
+                          <CardContent className="">
                             <div className="flex items-center justify-between">
                               <div>
                                 <h3 className="font-semibold text-foreground">
@@ -213,7 +217,7 @@ export default function FreelancerDashboardPage() {
                     <AnimatedItem key={c.id}>
                       <Link href={`/contracts/${c.id}`}>
                         <Card className="hover:shadow-md transition-shadow cursor-pointer">
-                          <CardContent className="py-4">
+                          <CardContent className="">
                             <div className="flex items-center justify-between">
                               <div>
                                 <h3 className="font-semibold text-foreground">

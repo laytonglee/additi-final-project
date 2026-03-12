@@ -19,6 +19,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { generateBreadcrumbs } from "@/lib/breadcrumb-utils";
+import { useNotificationSocket } from "@/hooks/useNotificationSocket";
 
 // =============================
 // Main Layout (Header + Content + Footer)
@@ -133,6 +134,9 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
+  // Establish a single WebSocket connection for real-time notifications
+  useNotificationSocket();
+
   return (
     <SidebarProvider>
       <div className="flex h-screen w-full bg-background">

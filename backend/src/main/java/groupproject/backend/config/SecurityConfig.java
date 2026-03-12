@@ -49,6 +49,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/error").permitAll()
 
+                        // WebSocket endpoint (auth handled by STOMP interceptor)
+                        .requestMatchers("/ws/**").permitAll()
+
                         // Auth endpoints — specific rules first
                         .requestMatchers("/api/auth/me").authenticated()
                         .requestMatchers("/api/auth/profile").authenticated()
@@ -58,6 +61,13 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/projects").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/projects/search").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/projects/{id}").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/projects/{id}/view").permitAll()
+
+                        // Public platform stats
+                        .requestMatchers(HttpMethod.GET, "/api/stats").permitAll()
+
+                        // Public categories (for dropdowns)
+                        .requestMatchers(HttpMethod.GET, "/api/categories").permitAll()
 
                         // Public user profile & reviews
                         .requestMatchers(HttpMethod.GET, "/api/users/{id}/profile").permitAll()

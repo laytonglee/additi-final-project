@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { projectApi } from "@/lib/api";
+import { projectApi, categoryApi, CategoryData } from "@/lib/api";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,15 +26,7 @@ import { AlertCircle, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { PageTransition } from "@/components/PageTransition";
 
-const CATEGORIES = [
-  "Web Development",
-  "Mobile Development",
-  "Design",
-  "Writing",
-  "Marketing",
-  "Data Science",
-  "Other",
-];
+// Categories are fetched dynamically from the API
 
 const fieldVariant = {
   hidden: { opacity: 0, y: 10 },
@@ -46,11 +38,19 @@ export default function PostProjectPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [categories, setCategories] = useState<CategoryData[]>([]);
+
+  useEffect(() => {
+    categoryApi
+      .getAll()
+      .then((res) => setCategories(res.data.data))
+      .catch(() => {});
+  }, []);
 
   const [form, setForm] = useState({
     title: "",
     description: "",
-    category: "Web Development",
+    category: "",
     projectType: "FIXED_PRICE",
     experienceLevel: "INTERMEDIATE",
     budgetMin: "",
@@ -96,9 +96,9 @@ export default function PostProjectPage() {
 
   return (
     <PageTransition>
-      <div className="max-w-2xl mx-auto px-4 py-8">
+      <div className="max-w-2xl mx-auto px-4 py-4">
         <motion.div
-          className="mb-8"
+          className="mb-5"
           initial={{ opacity: 0, y: -12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
@@ -165,7 +165,7 @@ export default function PostProjectPage() {
                     required
                     value={form.description}
                     onChange={(e) => update("description", e.target.value)}
-                    rows={6}
+                    rows={4}
                     placeholder="Describe what you need in detail…"
                     className="resize-none"
                   />
@@ -181,9 +181,9 @@ export default function PostProjectPage() {
                       <SelectValue placeholder="Select a category" />
                     </SelectTrigger>
                     <SelectContent>
-                      {CATEGORIES.map((cat) => (
-                        <SelectItem key={cat} value={cat}>
-                          {cat}
+                      {categories.map((cat) => (
+                        <SelectItem key={cat.id} value={cat.name}>
+                          {cat.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
