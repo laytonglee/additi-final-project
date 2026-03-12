@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { AlertCircle, Loader2 } from "lucide-react";
@@ -26,6 +26,7 @@ export function LoginForm({
   ...props
 }: React.ComponentProps<"form">) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { login, loading, error, clearError } = useAuthStore();
 
   const [email, setEmail] = useState("");
@@ -35,7 +36,15 @@ export function LoginForm({
     e.preventDefault();
     try {
       await login(email, password);
-      // Redirect to the appropriate dashboard based on the user's role
+
+      // Honor the ?redirect= query param if present
+      const redirectTo = searchParams.get("redirect");
+      if (redirectTo) {
+        router.push(redirectTo);
+        return;
+      }
+
+      // Otherwise, redirect based on role
       const state = useAuthStore.getState();
       if (state.isAdmin()) {
         router.push("/admin");
