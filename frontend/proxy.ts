@@ -1,45 +1,17 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-// Routes that require authentication (redirect to /login if not authed)
-const protectedPrefixes = [
-  "/post-project",
-  "/client",
-  "/freelancer",
-  "/contracts",
-  "/settings",
-  "/notifications",
-];
-
-// Routes only for guests (redirect to / if already authed)
-const guestOnly = ["/login", "/register"];
-
-// Admin routes
-const adminPrefixes = ["/admin"];
-
-export function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-  const accessToken = request.cookies.get("accessToken")?.value;
-
-  // If accessing protected routes without token → redirect to login
-  if (!accessToken) {
-    const isProtected = protectedPrefixes.some((p) => pathname.startsWith(p));
-    const isAdmin = adminPrefixes.some((p) => pathname.startsWith(p));
-    if (isProtected || isAdmin) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/login";
-      url.searchParams.set("redirect", pathname);
-      return NextResponse.redirect(url);
-    }
-  }
-
-  // If accessing guest-only routes with token → redirect to home
-  if (accessToken && guestOnly.some((p) => pathname.startsWith(p))) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/";
-    return NextResponse.redirect(url);
-  }
-
+/**
+ * Next.js 16 Proxy
+ *
+ * Auth cookies (accessToken / refreshToken) are set by the backend API on a
+ * different domain (Render) so they are NOT visible to Vercel's edge.
+ * All auth protection is handled client-side by the `useRequireAuth` hook.
+ *
+ * This proxy is a pass-through — kept as a placeholder so no stale
+ * cached deployment causes redirect loops.
+ */
+export function proxy(_request: NextRequest) {
   return NextResponse.next();
 }
 

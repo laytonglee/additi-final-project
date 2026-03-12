@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useAuthStore } from "@/store/auth";
 
 /**
@@ -12,19 +12,20 @@ import { useAuthStore } from "@/store/auth";
 export function useRequireAuth(requiredRole?: string) {
   const { user, loading, hasRole } = useAuthStore();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     if (loading) return; // wait until auth state is resolved
 
     if (!user) {
-      router.replace("/login");
+      router.replace(`/login?redirect=${encodeURIComponent(pathname)}`);
       return;
     }
 
     if (requiredRole && !hasRole(requiredRole)) {
       router.replace("/");
     }
-  }, [user, loading, requiredRole, router, hasRole]);
+  }, [user, loading, requiredRole, router, hasRole, pathname]);
 
   return { user, loading };
 }

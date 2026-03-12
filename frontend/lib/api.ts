@@ -357,8 +357,10 @@ export const projectApi = {
     const query = new URLSearchParams();
     if (params.keyword) query.set("keyword", params.keyword);
     if (params.category) query.set("category", params.category);
-    if (params.minBudget != null) query.set("minBudget", String(params.minBudget));
-    if (params.maxBudget != null) query.set("maxBudget", String(params.maxBudget));
+    if (params.minBudget != null)
+      query.set("minBudget", String(params.minBudget));
+    if (params.maxBudget != null)
+      query.set("maxBudget", String(params.maxBudget));
     if (params.status) query.set("status", params.status);
     query.set("page", String(params.page ?? 0));
     query.set("size", String(params.size ?? 10));
