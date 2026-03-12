@@ -129,7 +129,7 @@ export default function RegisterPage() {
             >
               {/* Role selector */}
               <motion.div className="space-y-2" variants={fieldVariant}>
-                <Label>I want to…</Label>
+                <Label>I want to...</Label>
                 <div className="grid grid-cols-2 gap-3">
                   {[
                     {
