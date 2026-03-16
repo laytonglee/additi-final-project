@@ -135,7 +135,7 @@ export default function InsightsPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1, duration: 0.45 }}
           >
-            FreelanceHub Insights
+            Khmerlance Insights
           </motion.h1>
 
           <motion.p

@@ -104,7 +104,7 @@ function DashboardFooter() {
   return (
     <footer className="border-t bg-background/50 backdrop-blur-sm mt-auto h-10 flex items-center justify-between px-6 shrink-0">
       <p className="text-xs text-muted-foreground">
-        © 2026 FreelanceHub. All rights reserved.
+        © 2026 Khmerlance. All rights reserved.
       </p>
       <div className="flex items-center gap-4">
         <a

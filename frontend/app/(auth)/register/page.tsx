@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { GalleryVerticalEnd } from "lucide-react";
+import Image from "next/image";
 import { AuthIllustration } from "@/components/AuthIllustration";
 import { useAuthStore } from "@/store/auth";
 import { Button } from "@/components/ui/button";
@@ -69,10 +69,13 @@ export default function RegisterPage() {
       <div className="flex flex-col gap-4 p-6 md:p-10">
         <div className="flex justify-center gap-2 md:justify-start">
           <a href="/" className="flex items-center gap-2 font-medium">
-            <div className="flex size-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
-              <GalleryVerticalEnd className="size-4" />
-            </div>
-            Freelancer Hub
+            <Image
+              src="/khmerlance-logo.png"
+              alt="Khmerlance"
+              width={180}
+              height={52}
+              className="w-auto object-contain bg-red-700"
+            />
           </a>
         </div>
 
@@ -91,7 +94,7 @@ export default function RegisterPage() {
             >
               <h1 className="text-2xl font-bold">Create your account</h1>
               <p className="text-sm text-balance text-muted-foreground">
-                Join FreelanceHub as a client or freelancer
+                Join Khmerlance as a client or freelancer
               </p>
             </motion.div>
 
