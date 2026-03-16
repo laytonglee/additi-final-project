@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { projectApi, ProjectData } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { useWebSocket } from "@/hooks/useWebSocket";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -77,6 +78,21 @@ export default function FreelancerProjectsPage() {
 
     if (user) fetchProjects();
   }, [user]);
+
+  // Real-time: new projects appear instantly when a client posts one
+  const handleNewProject = useCallback((payload: unknown) => {
+    const incoming = payload as ProjectData;
+    setProjects((prev) => {
+      if (prev.some((p) => p.id === incoming.id)) return prev;
+      return [incoming, ...prev];
+    });
+  }, []);
+
+  useWebSocket({
+    topic: "/topic/projects/new",
+    onMessage: handleNewProject,
+    enabled: !!user,
+  });
 
   const open = projects.filter((project) => project.status === "OPEN");
   const inProgress = projects.filter(

@@ -77,8 +77,8 @@ public class MessageServiceImpl implements MessageService {
                 NotificationType.NEW_MESSAGE,
                 "New Message",
                 sender.getRealName() + " sent you a message in \"" + contract.getProject().getTitle() + "\"",
-                saved.getId(),
-                ReferenceType.MESSAGE
+                contractId,
+                ReferenceType.CONTRACT
         );
 
         return saved;

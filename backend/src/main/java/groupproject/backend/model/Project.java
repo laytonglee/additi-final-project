@@ -37,8 +37,9 @@ public class Project {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column(length = 100)
-    private String category;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    private Category category;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "project_type")

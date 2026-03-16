@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { AxiosError } from "axios";
@@ -14,6 +14,7 @@ import {
 } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { useWebSocket } from "@/hooks/useWebSocket";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -150,6 +151,26 @@ export default function ClientProjectDetailPage() {
     setProject(res.data.data);
     setProposals(pRes.data.data);
   };
+
+  // Real-time proposal updates: new submissions and accept/reject changes
+  const handleProposalWsMessage = useCallback((payload: unknown) => {
+    const incoming = payload as ProposalData;
+    setProposals((prev) => {
+      const exists = prev.some((p) => p.id === incoming.id);
+      if (exists) {
+        return prev.map((p) => (p.id === incoming.id ? incoming : p));
+      }
+      return [incoming, ...prev];
+    });
+  }, []);
+
+  useWebSocket({
+    topic: Number.isFinite(projectId)
+      ? `/topic/projects/${projectId}/proposals`
+      : "",
+    onMessage: handleProposalWsMessage,
+    enabled: Number.isFinite(projectId),
+  });
 
   useEffect(() => {
     if (!project) return;

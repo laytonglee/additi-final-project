@@ -10,11 +10,13 @@ import groupproject.backend.repository.ContractRepository;
 import groupproject.backend.repository.ProjectRepository;
 import groupproject.backend.repository.ProposalRepository;
 import groupproject.backend.request.CreateProposalRequest;
+import groupproject.backend.response.ProposalResponse;
 import groupproject.backend.service.NotificationService;
 import groupproject.backend.service.ProposalService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -29,6 +31,7 @@ public class ProposalServiceImpl implements ProposalService {
     private final ProjectRepository projectRepository;
     private final ContractRepository contractRepository;
     private final NotificationService notificationService;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @Override
     @Transactional
@@ -57,15 +60,19 @@ public class ProposalServiceImpl implements ProposalService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "You already submitted a proposal");
         }
 
-        // Notify client
+        // Notify client — use projectId as referenceId so the frontend can link directly to the project
         notificationService.create(
                 project.getClient(),
                 NotificationType.PROPOSAL_RECEIVED,
                 "New Proposal Received",
                 freelancer.getRealName() + " submitted a proposal for \"" + project.getTitle() + "\"",
-                saved.getId(),
-                ReferenceType.PROPOSAL
+                project.getId(),
+                ReferenceType.PROJECT
         );
+
+        // Push real-time update to the client watching this project
+        messagingTemplate.convertAndSend(
+                "/topic/projects/" + projectId + "/proposals", buildProposalResponse(saved));
 
         return saved;
     }
@@ -117,9 +124,13 @@ public class ProposalServiceImpl implements ProposalService {
                         NotificationType.PROPOSAL_REJECTED,
                         "Proposal Rejected",
                         "Your proposal for \"" + project.getTitle() + "\" was not selected.",
-                        other.getId(),
-                        ReferenceType.PROPOSAL
+                        project.getId(),
+                        ReferenceType.PROJECT
                 );
+                // Notify the rejected freelancer in real-time
+                messagingTemplate.convertAndSend(
+                        "/topic/users/" + other.getFreelancer().getId() + "/proposals",
+                        buildProposalResponse(other));
             }
         }
 
@@ -155,6 +166,14 @@ public class ProposalServiceImpl implements ProposalService {
                 ReferenceType.CONTRACT
         );
 
+        // Push real-time update to the accepted freelancer and to the client's project view
+        messagingTemplate.convertAndSend(
+                "/topic/users/" + proposal.getFreelancer().getId() + "/proposals",
+                buildProposalResponse(proposal));
+        messagingTemplate.convertAndSend(
+                "/topic/projects/" + project.getId() + "/proposals",
+                buildProposalResponse(proposal));
+
         return proposal;
     }
 
@@ -180,10 +199,35 @@ public class ProposalServiceImpl implements ProposalService {
                 NotificationType.PROPOSAL_REJECTED,
                 "Proposal Rejected",
                 "Your proposal for \"" + proposal.getProject().getTitle() + "\" was rejected.",
-                proposal.getId(),
-                ReferenceType.PROPOSAL
+                proposal.getProject().getId(),
+                ReferenceType.PROJECT
         );
 
+        // Push real-time update to the rejected freelancer and to the client's project view
+        messagingTemplate.convertAndSend(
+                "/topic/users/" + proposal.getFreelancer().getId() + "/proposals",
+                buildProposalResponse(proposal));
+        messagingTemplate.convertAndSend(
+                "/topic/projects/" + proposal.getProject().getId() + "/proposals",
+                buildProposalResponse(proposal));
+
         return proposal;
+    }
+
+    private ProposalResponse buildProposalResponse(Proposal p) {
+        return ProposalResponse.builder()
+                .id(p.getId())
+                .projectId(p.getProject().getId())
+                .projectTitle(p.getProject().getTitle())
+                .freelancerId(p.getFreelancer().getId())
+                .freelancerName(p.getFreelancer().getRealName())
+                .freelancerAvatarUrl(p.getFreelancer().getAvatarUrl())
+                .pitchText(p.getPitchText())
+                .offeredPrice(p.getOfferedPrice())
+                .status(p.getStatus().name())
+                .readByClient(p.isReadByClient())
+                .createdAt(p.getCreatedAt())
+                .updatedAt(p.getUpdatedAt())
+                .build();
     }
 }

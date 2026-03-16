@@ -83,7 +83,7 @@ export default function PostProjectPage() {
         budgetMax: Number(form.budgetMax),
         deadline: form.deadline || undefined,
       });
-      router.push(`/projects/${res.data.data.id}`);
+      router.push(`/client/dashboard`);
     } catch (err: unknown) {
       setError(
         (err as { response?: { data?: { message?: string } } })?.response?.data

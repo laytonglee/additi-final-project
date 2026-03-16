@@ -7,6 +7,7 @@ import { AxiosError } from "axios";
 import { projectApi, proposalApi, ProjectData, ProposalData } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { useWebSocket } from "@/hooks/useWebSocket";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -135,6 +136,18 @@ export default function FreelancerProjectDetailPage() {
 
     fetchData();
   }, [projectId]);
+
+  // Real-time proposal status updates (accept / reject from client)
+  useWebSocket({
+    topic: user ? `/topic/users/${user.id}/proposals` : "",
+    onMessage: (payload) => {
+      const incoming = payload as ProposalData;
+      if (incoming.projectId === projectId) {
+        setMyProposal(incoming);
+      }
+    },
+    enabled: !!user,
+  });
 
   const handleSubmitProposal = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -19,14 +19,16 @@ function getNotificationLink(
   isFreelancer: boolean,
 ): string | null {
   const { referenceType, referenceId, type } = n;
-  if (type === "NEW_MESSAGE" || referenceType === "MESSAGE") return "/messages";
+  // Messages: referenceId is now the contractId
+  if (type === "NEW_MESSAGE" || referenceType === "MESSAGE") {
+    return referenceId ? `/contracts/${referenceId}` : "/messages";
+  }
   if (referenceType === "CONTRACT") return `/contracts/${referenceId}`;
   if (referenceType === "PROJECT") {
     if (isClient) return `/client/projects/${referenceId}`;
     if (isFreelancer) return `/freelancer/projects/${referenceId}`;
     return `/projects/${referenceId}`;
   }
-  if (referenceType === "PROPOSAL") return "/messages";
   return null;
 }
 

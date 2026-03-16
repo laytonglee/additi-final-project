@@ -99,7 +99,7 @@ public class AdminController {
                 .assignedFreelancerName(p.getAssignedFreelancer() != null ? p.getAssignedFreelancer().getRealName() : null)
                 .title(p.getTitle())
                 .description(p.getDescription())
-                .category(p.getCategory())
+                .category(p.getCategory() != null ? p.getCategory().getName() : null)
                 .projectType(p.getProjectType() != null ? p.getProjectType().name() : null)
                 .experienceLevel(p.getExperienceLevel() != null ? p.getExperienceLevel().name() : null)
                 .budgetMin(p.getBudgetMin())

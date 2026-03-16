@@ -1,7 +1,12 @@
 package groupproject.backend.controller;
 
+import groupproject.backend.model.Message;
 import groupproject.backend.model.Notification;
+import groupproject.backend.model.Proposal;
 import groupproject.backend.model.User;
+import groupproject.backend.model.enums.ReferenceType;
+import groupproject.backend.repository.MessageRepository;
+import groupproject.backend.repository.ProposalRepository;
 import groupproject.backend.response.ApiResponse;
 import groupproject.backend.response.NotificationResponse;
 import groupproject.backend.service.NotificationService;
@@ -18,6 +23,8 @@ import org.springframework.web.bind.annotation.*;
 public class NotificationController {
 
     private final NotificationService notificationService;
+    private final ProposalRepository proposalRepository;
+    private final MessageRepository messageRepository;
 
     @GetMapping
     public ResponseEntity<ApiResponse<Page<NotificationResponse>>> getAll(
@@ -53,13 +60,34 @@ public class NotificationController {
     }
 
     private NotificationResponse toResponse(Notification n) {
+        Long refId = n.getReferenceId();
+        String refType = n.getReferenceType() != null ? n.getReferenceType().name() : null;
+
+        // Resolve old PROPOSAL references to PROJECT so the frontend can link to the project page
+        if (n.getReferenceType() == ReferenceType.PROPOSAL && refId != null) {
+            Proposal proposal = proposalRepository.findById(refId).orElse(null);
+            if (proposal != null) {
+                refId = proposal.getProject().getId();
+                refType = ReferenceType.PROJECT.name();
+            }
+        }
+
+        // Resolve old MESSAGE references to CONTRACT so the frontend links to /contracts/{contractId}
+        if (n.getReferenceType() == ReferenceType.MESSAGE && refId != null) {
+            Message message = messageRepository.findById(refId).orElse(null);
+            if (message != null) {
+                refId = message.getContract().getId();
+                refType = ReferenceType.CONTRACT.name();
+            }
+        }
+
         return NotificationResponse.builder()
                 .id(n.getId())
                 .type(n.getType().name())
                 .title(n.getTitle())
                 .body(n.getBody())
-                .referenceId(n.getReferenceId())
-                .referenceType(n.getReferenceType() != null ? n.getReferenceType().name() : null)
+                .referenceId(refId)
+                .referenceType(refType)
                 .isRead(n.isRead())
                 .readAt(n.getReadAt())
                 .createdAt(n.getCreatedAt())

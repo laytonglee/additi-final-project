@@ -1,18 +1,23 @@
 package groupproject.backend.service.impl;
 
+import groupproject.backend.model.Category;
 import groupproject.backend.model.Project;
 import groupproject.backend.model.User;
 import groupproject.backend.model.enums.ExperienceLevel;
 import groupproject.backend.model.enums.ProjectStatus;
 import groupproject.backend.model.enums.ProjectType;
+import groupproject.backend.repository.CategoryRepository;
 import groupproject.backend.repository.ProjectRepository;
+import groupproject.backend.repository.ProposalRepository;
 import groupproject.backend.request.CreateProjectRequest;
 import groupproject.backend.request.UpdateProjectRequest;
+import groupproject.backend.response.ProjectResponse;
 import groupproject.backend.service.ProjectService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -24,6 +29,9 @@ import java.math.BigDecimal;
 public class ProjectServiceImpl implements ProjectService {
 
     private final ProjectRepository projectRepository;
+    private final CategoryRepository categoryRepository;
+    private final ProposalRepository proposalRepository;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @Override
     @Transactional
@@ -32,14 +40,41 @@ public class ProjectServiceImpl implements ProjectService {
         p.setClient(client);
         p.setTitle(request.getTitle());
         p.setDescription(request.getDescription());
-        p.setCategory(request.getCategory());
+        if (request.getCategory() != null) {
+            Category cat = categoryRepository.findByName(request.getCategory())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Category not found: " + request.getCategory()));
+            p.setCategory(cat);
+        }
         if (request.getProjectType() != null) p.setProjectType(ProjectType.valueOf(request.getProjectType()));
         if (request.getExperienceLevel() != null) p.setExperienceLevel(ExperienceLevel.valueOf(request.getExperienceLevel()));
         p.setBudgetMin(request.getBudgetMin());
         p.setBudgetMax(request.getBudgetMax());
         p.setDeadline(request.getDeadline());
         p.setStatus(ProjectStatus.OPEN);
-        return projectRepository.save(p);
+        Project saved = projectRepository.save(p);
+
+        // Broadcast new project to all freelancers listening
+        ProjectResponse payload = ProjectResponse.builder()
+                .id(saved.getId())
+                .clientId(saved.getClient().getId())
+                .clientName(saved.getClient().getRealName())
+                .title(saved.getTitle())
+                .description(saved.getDescription())
+                .category(saved.getCategory() != null ? saved.getCategory().getName() : null)
+                .projectType(saved.getProjectType() != null ? saved.getProjectType().name() : null)
+                .experienceLevel(saved.getExperienceLevel() != null ? saved.getExperienceLevel().name() : null)
+                .budgetMin(saved.getBudgetMin())
+                .budgetMax(saved.getBudgetMax())
+                .status(saved.getStatus().name())
+                .deadline(saved.getDeadline())
+                .viewCount(saved.getViewCount())
+                .proposalCount(0)
+                .createdAt(saved.getCreatedAt())
+                .updatedAt(saved.getUpdatedAt())
+                .build();
+        messagingTemplate.convertAndSend("/topic/projects/new", payload);
+
+        return saved;
     }
 
     @Override
@@ -58,7 +93,11 @@ public class ProjectServiceImpl implements ProjectService {
 
         if (request.getTitle() != null) p.setTitle(request.getTitle());
         if (request.getDescription() != null) p.setDescription(request.getDescription());
-        if (request.getCategory() != null) p.setCategory(request.getCategory());
+        if (request.getCategory() != null) {
+            Category cat = categoryRepository.findByName(request.getCategory())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Category not found: " + request.getCategory()));
+            p.setCategory(cat);
+        }
         if (request.getProjectType() != null) p.setProjectType(ProjectType.valueOf(request.getProjectType()));
         if (request.getExperienceLevel() != null) p.setExperienceLevel(ExperienceLevel.valueOf(request.getExperienceLevel()));
         if (request.getBudgetMin() != null) p.setBudgetMin(request.getBudgetMin());
