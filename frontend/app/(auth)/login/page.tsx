@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense } from "react";
-import { GalleryVerticalEnd } from "lucide-react";
+import Image from "next/image";
 import { motion } from "framer-motion";
 
 import { LoginForm } from "@/components/login-form";
@@ -20,10 +20,13 @@ export default function LoginPage() {
       <div className="flex flex-col gap-4 p-6 md:p-10">
         <motion.div className="flex justify-center md:justify-start">
           <a href="/" className="flex items-center gap-2 font-medium">
-            <div className="flex size-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
-              <GalleryVerticalEnd className="size-4" />
-            </div>
-            Freelancer Hub
+            <Image
+              src="/khmerlance-logo.png"
+              alt="Khmerlance"
+              width={180}
+              height={52}
+              className="w-auto object-contain"
+            />
           </a>
         </motion.div>
         <div className="flex flex-1 items-center justify-center">

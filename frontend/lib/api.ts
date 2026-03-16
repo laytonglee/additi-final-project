@@ -47,6 +47,7 @@ const attachRefreshInterceptor = (instance: typeof api) => {
         "/api/auth/register",
         "/api/auth/refresh",
         "/api/auth/logout",
+        "/api/auth/me",
       ];
       if (skipRefreshUrls.some((u) => original.url?.startsWith(u))) {
         return Promise.reject(error);

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useAuthStore } from "@/store/auth";
 import {
@@ -146,11 +147,15 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <Link href="/">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                  <Zap className="size-4" />
-                </div>
+                <Image
+                  src="/khmerlance-logo.png"
+                  alt="Khmerlance"
+                  width={32}
+                  height={32}
+                  className="size-8 rounded-lg object-contain"
+                />
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">FreelanceHub</span>
+                  <span className="truncate font-semibold">Khmerlance</span>
                   <span className="truncate text-xs text-sidebar-foreground/60">
                     Dashboard
                   </span>
@@ -172,7 +177,11 @@ export function AppSidebar() {
                 {[
                   { href: "/admin", label: "Overview", icon: ShieldCheck },
                   { href: "/admin/users", label: "Users", icon: Users2 },
-                  { href: "/admin/projects", label: "Projects", icon: FolderOpen },
+                  {
+                    href: "/admin/projects",
+                    label: "Projects",
+                    icon: FolderOpen,
+                  },
                   { href: "/admin/categories", label: "Categories", icon: Tag },
                 ].map((item) => (
                   <SidebarMenuItem key={item.href}>

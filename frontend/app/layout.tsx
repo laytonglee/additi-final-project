@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "FreelanceHub - Connect Clients & Freelancers",
+  title: "Khmerlance - Connect Clients & Freelancers",
   description:
     "Post projects, submit proposals, manage contracts, and collaborate. The complete freelancer project board.",
 };
