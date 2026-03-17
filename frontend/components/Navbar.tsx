@@ -74,11 +74,11 @@ export function Navbar() {
             <div className="flex items-center min-w-0 mt-2">
               <Link href="/" className="group flex items-center shrink-0">
                 <Image
-                  src="/khmerlance-logo.png"
+                  src="/khmerlance-logo-2.png"
                   alt="Khmerlance"
                   width={180}
                   height={52}
-                  className="w-auto object-contain"
+                  className="w-full object-contain"
                   priority
                 />
               </Link>

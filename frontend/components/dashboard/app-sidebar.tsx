@@ -146,20 +146,20 @@ export function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <Link href="/">
+              <Link href="/" className="pl-0">
                 <Image
-                  src="/khmerlance-logo.png"
+                  src="/khmerlance-logo-2.png"
                   alt="Khmerlance"
-                  width={32}
-                  height={32}
-                  className="size-8 rounded-lg object-contain"
+                  width={180}
+                  height={52}
+                  className="object-contain"
                 />
-                <div className="grid flex-1 text-left text-sm leading-tight">
+                {/* <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">Khmerlance</span>
                   <span className="truncate text-xs text-sidebar-foreground/60">
                     Dashboard
                   </span>
-                </div>
+                </div> */}
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

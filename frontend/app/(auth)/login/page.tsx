@@ -21,11 +21,11 @@ export default function LoginPage() {
         <motion.div className="flex justify-center md:justify-start">
           <a href="/" className="flex items-center gap-2 font-medium">
             <Image
-              src="/khmerlance-logo.png"
+              src="/khmerlance-logo-2.png"
               alt="Khmerlance"
               width={180}
               height={52}
-              className="w-auto object-contain"
+              className="w-full object-contain"
             />
           </a>
         </motion.div>

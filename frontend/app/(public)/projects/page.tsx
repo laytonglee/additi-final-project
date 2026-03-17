@@ -335,7 +335,7 @@ export default function ProjectsPage() {
         minBudget: filters.minBudget ? Number(filters.minBudget) : undefined,
         maxBudget: filters.maxBudget ? Number(filters.maxBudget) : undefined,
         page: pg,
-        size: 12,
+        size: 6,
       });
       const data = res.data.data as PageData<ProjectData>;
       setProjects(data.content);
@@ -733,7 +733,7 @@ export default function ProjectsPage() {
                   : "flex flex-col gap-3"
               }
             >
-              {Array.from({ length: 9 }).map((_, i) => (
+              {Array.from({ length: 6 }).map((_, i) => (
                 <ProjectCardSkeleton key={i} list={viewMode === "list"} />
               ))}
             </div>

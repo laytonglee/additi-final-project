@@ -22,6 +22,7 @@ import {
   Star,
   ShieldCheck,
   Zap,
+  Users2,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { PageTransition } from "@/components/PageTransition";
@@ -41,10 +42,10 @@ const fadeUp = {
 };
 
 const stats = [
-  { icon: Users, value: "10K+", label: "Freelancers" },
-  { icon: Briefcase, value: "4K+", label: "Projects Posted" },
-  { icon: CheckCircle, value: "95%", label: "Success Rate" },
-  { icon: Globe, value: "120+", label: "Countries" },
+  { icon: Users, value: "100+", label: "Freelancers" },
+  { icon: Briefcase, value: "200+", label: "Projects Posted" },
+  { icon: CheckCircle, value: "90%", label: "Success Rate" },
+  { icon: Users2, value: "200+", label: "Global Clients" },
 ];
 
 const features = [
@@ -104,8 +105,8 @@ export default function HomePage() {
         </div>
 
         {/* Hero */}
-        <section className="relative">
-          <div className="mx-auto max-w-7xl px-4 pb-12 pt-14 sm:px-6 sm:pb-16 sm:pt-20 lg:px-8 lg:pb-20 lg:pt-24">
+        <section className="relative ">
+          <div className="mx-auto max-w-7xl px-4 pb-12 pt-12 sm:px-6 sm:pb-16 sm:pt-20 lg:px-8 lg:pb-20 lg:pt-24">
             <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2 lg:gap-12">
               {/* Left */}
               <div className="order-2 lg:order-1">
@@ -272,7 +273,7 @@ export default function HomePage() {
         </section>
 
         {/* Stats Strip */}
-        <section className="py-8 sm:py-10">
+        <section className=" ">
           <div className="mx-auto grid max-w-7xl grid-cols-2 gap-4 px-4 sm:gap-6 sm:px-6 lg:grid-cols-4 lg:px-8">
             {stats.map((s, i) => (
               <motion.div
