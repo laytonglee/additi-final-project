@@ -12,6 +12,7 @@ import groupproject.backend.service.ContractService;
 import groupproject.backend.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -26,6 +27,7 @@ public class ContractServiceImpl implements ContractService {
     private final ContractRepository contractRepository;
     private final ProjectRepository projectRepository;
     private final NotificationService notificationService;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @Override
     public List<Contract> getMyContracts(User user) {
@@ -76,6 +78,12 @@ public class ContractServiceImpl implements ContractService {
                 "The contract for \"" + c.getProject().getTitle() + "\" has been marked as complete by " + client.getRealName(),
                 c.getId(),
                 ReferenceType.CONTRACT
+        );
+
+        // Broadcast status change so both parties see it in real time
+        messagingTemplate.convertAndSend(
+                "/topic/contracts/" + c.getId() + "/status",
+                java.util.Map.of("status", c.getStatus().name())
         );
 
         return c;

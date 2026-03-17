@@ -106,6 +106,18 @@ export default function ContractDetailPage() {
     enabled: !!contractId && !loading,
   });
 
+  // Real-time contract status updates (e.g. completion)
+  const handleStatusUpdate = useCallback((payload: unknown) => {
+    const data = payload as { status: string };
+    setContract((prev) => (prev ? { ...prev, status: data.status } : prev));
+  }, []);
+
+  useWebSocket({
+    topic: `/topic/contracts/${contractId}/status`,
+    onMessage: handleStatusUpdate,
+    enabled: !!contractId && !loading,
+  });
+
   const { typingUsers, sendTyping } = useTypingIndicator(
     contractId,
     !!contractId && !loading,
