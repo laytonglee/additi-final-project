@@ -142,14 +142,31 @@ public class AuthServiceImpl implements AuthService {
         cookieUtil.addCookie(response, "accessToken", accessToken, jwtProperties.getExpiration());
         cookieUtil.addCookie(response, "refreshToken", refreshToken, jwtProperties.getRefreshExpiration());
 
+        Set<String> roleNames = user.getRoles()
+                .stream()
+                .map(Role::getName)
+                .collect(Collectors.toSet());
+
+        MeResponse meData = MeResponse.builder()
+                .id(user.getId())
+                .name(user.getRealName())
+                .email(user.getEmail())
+                .bio(user.getBio())
+                .skills(user.getSkills())
+                .avatarUrl(user.getAvatarUrl())
+                .isBanned(user.isBanned())
+                .isOnline(user.isOnline())
+                .notifEmail(user.isNotifEmail())
+                .notifPush(user.isNotifPush())
+                .roles(roleNames)
+                .build();
+
         return AuthResponse.builder()
                 .type("Bearer")
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
-                .roles(user.getRoles()
-                        .stream()
-                        .map(Role::getName)
-                        .collect(Collectors.toSet()))
+                .roles(roleNames)
+                .user(meData)
                 .build();
     }
 
