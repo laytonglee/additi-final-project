@@ -53,9 +53,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   login: async (email, password) => {
     try {
       set({ loading: true, error: null });
-      await authApi.login({ email, password });
-      const res = await authApi.me();
-      set({ user: res.data.data, loading: false });
+      const loginRes = await authApi.login({ email, password });
+      // Use user data from login response directly (avoids cross-origin
+      // cookie race where /me might fire before cookies are stored).
+      const userData = loginRes.data.data?.user;
+      if (userData) {
+        set({ user: userData, loading: false });
+      } else {
+        // Fallback: fetch from /me if the login response doesn't include user
+        const res = await authApi.me();
+        set({ user: res.data.data, loading: false });
+      }
     } catch (err: unknown) {
       const axiosErr = err as {
         response?: { data?: { message?: string } };

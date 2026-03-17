@@ -24,4 +24,6 @@ public class AuthResponse {
 
     private Set<String> roles;
 
+    private MeResponse user;
+
 }
