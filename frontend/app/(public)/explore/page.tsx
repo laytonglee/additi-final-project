@@ -166,9 +166,9 @@ const topFreelancers = [
 ];
 
 const stats = [
-  { label: "Projects posted", value: "12,400+", icon: TrendingUp },
-  { label: "Freelancers", value: "8,200+", icon: Users },
-  { label: "Completed", value: "9,100+", icon: Star },
+  { label: "Projects posted", value: "200+", icon: TrendingUp },
+  { label: "Freelancers", value: "100+", icon: Users },
+  { label: "Completed", value: "100+", icon: Star },
 ];
 
 export default function ExplorePage() {

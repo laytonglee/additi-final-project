@@ -24,22 +24,22 @@ const metrics = [
   {
     icon: Users,
     label: "Freelancers",
-    value: "10,000+",
+    value: "100+",
   },
   {
     icon: Briefcase,
     label: "Projects Posted",
-    value: "25,000+",
+    value: "200+",
   },
   {
     icon: DollarSign,
     label: "Average Project Budget",
-    value: "$2,400",
+    value: "$250",
   },
   {
     icon: Star,
     label: "Client Satisfaction",
-    value: "4.9 / 5",
+    value: "4.5 / 5",
   },
 ];
 

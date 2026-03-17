@@ -144,9 +144,9 @@ const members = [
 ];
 
 const stats = [
-  { label: "Members", value: "8,200+", icon: Users },
-  { label: "Discussions", value: "34,000+", icon: MessageSquare },
-  { label: "Helpful replies", value: "120,000+", icon: Heart },
+  { label: "Members", value: "200+", icon: Users },
+  { label: "Discussions", value: "300+", icon: MessageSquare },
+  { label: "Helpful replies", value: "100+", icon: Heart },
 ];
 
 export default function CommunityPage() {
@@ -376,11 +376,11 @@ export default function CommunityPage() {
               transition={{ delay: 0.4, duration: 0.4 }}
             >
               <Card className="bg-primary/5 border-primary/20 text-center p-6">
-                <Star className="size-8 text-primary mx-auto mb-3" />
-                <h3 className="font-bold text-foreground mb-1">
+                <Star className="size-8 text-primary mx-auto" />
+                <h3 className="font-bold text-foreground">
                   Become a contributor
                 </h3>
-                <p className="text-xs text-muted-foreground mb-4">
+                <p className="text-xs text-muted-foreground ">
                   Share knowledge and earn reputation points.
                 </p>
                 <Button size="sm" className="w-full">

@@ -13,11 +13,11 @@
         <relativePath/>
     </parent>
 
-    <groupId>com.freelancehub</groupId>
+    <groupId>com.khmerlance</groupId>
     <artifactId>backend</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>FreelanceHub Backend</name>
-    <description>FreelanceHub - Freelancer Project Board Backend</description>
+    <name>Khmerlance Backend</name>
+    <description>Khmerlance - Freelancer Project Board Backend</description>
 
     <properties>
         <java.version>21</java.version>

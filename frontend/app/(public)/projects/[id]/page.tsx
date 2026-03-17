@@ -12,7 +12,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-import { ArrowLeft, Clock, XCircle } from "lucide-react";
+import {
+  ArrowLeft,
+  Banknote,
+  CalendarDays,
+  Clock,
+  Eye,
+  FileText,
+  Send,
+  XCircle,
+} from "lucide-react";
 
 import { motion } from "framer-motion";
 import { PageTransition } from "@/components/PageTransition";
@@ -65,14 +74,19 @@ function DetailSkeleton() {
 function MetricCard({
   label,
   value,
+  icon: Icon,
 }: {
   label: string;
   value: React.ReactNode;
+  icon: React.ElementType;
 }) {
   return (
     <Card className="hover:shadow-md transition-shadow">
-      <CardContent className="">
-        <p className="text-xs text-muted-foreground uppercase mb-1">{label}</p>
+      <CardContent>
+        <div className="flex items-center justify-between mb-1">
+          <p className="text-xs text-muted-foreground uppercase">{label}</p>
+          <Icon className="size-4 text-muted-foreground/50" />
+        </div>
         <div className="text-xl font-bold">{value}</div>
       </CardContent>
     </Card>
@@ -303,16 +317,22 @@ export default function ProjectDetailPage() {
               <MetricCard
                 label="Budget"
                 value={`${fmt(project.budgetMin)} – ${fmt(project.budgetMax)}`}
+                icon={Banknote}
               />
 
-              <MetricCard label="Proposals" value={project.proposalCount} />
+              <MetricCard
+                label="Proposals"
+                value={project.proposalCount}
+                icon={FileText}
+              />
 
-              <MetricCard label="Views" value={project.viewCount} />
+              <MetricCard label="Views" value={project.viewCount} icon={Eye} />
 
               {project.deadline && (
                 <MetricCard
                   label="Deadline"
                   value={new Date(project.deadline).toLocaleDateString()}
+                  icon={CalendarDays}
                 />
               )}
 
@@ -321,9 +341,12 @@ export default function ProjectDetailPage() {
                 (!user || isFreelancer()) && (
                   <Card className="border-primary/20 bg-primary/5">
                     <CardHeader>
-                      <CardTitle className="text-base">
-                        Submit Proposal
-                      </CardTitle>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base">
+                          Submit Proposal
+                        </CardTitle>
+                        <Send className="size-4 text-muted-foreground/50" />
+                      </div>
                     </CardHeader>
 
                     <CardContent>
