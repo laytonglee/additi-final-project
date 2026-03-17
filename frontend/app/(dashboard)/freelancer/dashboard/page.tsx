@@ -94,7 +94,7 @@ export default function FreelancerDashboardPage() {
 
   return (
     <PageTransition>
-      <div className="ml-3">
+      <div>
         <motion.div
           className="flex justify-between items-center mb-8 "
           initial={{ opacity: 0, y: -12 }}
