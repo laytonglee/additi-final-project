@@ -94,15 +94,15 @@ export default function FreelancerDashboardPage() {
 
   return (
     <PageTransition>
-      <div>
+      <div className="ml-3">
         <motion.div
-          className="flex justify-between items-center mb-8"
+          className="flex justify-between items-center mb-8 "
           initial={{ opacity: 0, y: -12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
         >
           <h1 className="text-3xl font-bold text-foreground">
-            Freelancer Dashboard here
+            Freelancer Dashboard
           </h1>
           <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}>
             <Button asChild>
