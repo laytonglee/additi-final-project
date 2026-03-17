@@ -4,8 +4,13 @@ import { useEffect, useRef, useCallback, useState } from "react";
 import { Client, IMessage, IFrame } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 
-const WS_URL =
-  (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080") + "/ws";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+const WS_URL = API_URL + "/ws";
+
+/** Build a native WebSocket URL from the HTTP API URL */
+function buildNativeWsUrl(httpUrl: string): string {
+  return httpUrl.replace(/^http/, "ws") + "/ws";
+}
 
 interface UseWebSocketOptions {
   /** The STOMP topic to subscribe to, e.g. "/topic/contracts/5/messages" */
@@ -16,7 +21,11 @@ interface UseWebSocketOptions {
   enabled?: boolean;
 }
 
-export function useWebSocket({ topic, onMessage, enabled = true }: UseWebSocketOptions) {
+export function useWebSocket({
+  topic,
+  onMessage,
+  enabled = true,
+}: UseWebSocketOptions) {
   const clientRef = useRef<Client | null>(null);
   const onMessageRef = useRef(onMessage);
   const [connected, setConnected] = useState(false);
@@ -38,7 +47,9 @@ export function useWebSocket({ topic, onMessage, enabled = true }: UseWebSocketO
     if (!enabled || !topic) return;
 
     const client = new Client({
-      // Use SockJS for transport (matches backend withSockJS())
+      // Prefer native WebSocket (sends cookies reliably cross-origin).
+      // Fall back to SockJS if native WS fails.
+      brokerURL: buildNativeWsUrl(API_URL),
       webSocketFactory: () => new SockJS(WS_URL) as WebSocket,
       reconnectDelay: 5000,
       heartbeatIncoming: 10000,

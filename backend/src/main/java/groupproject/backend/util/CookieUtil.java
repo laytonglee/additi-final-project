@@ -32,6 +32,7 @@ public class CookieUtil {
                 .append("; SameSite=").append(sameSite)
                 .append("; Max-Age=").append(maxAgeMs / 1000);
         if (secure) sb.append("; Secure");
+        if ("None".equalsIgnoreCase(sameSite)) sb.append("; Partitioned");
         response.addHeader("Set-Cookie", sb.toString());
     }
 
@@ -42,6 +43,7 @@ public class CookieUtil {
                 .append("; SameSite=").append(sameSite)
                 .append("; Max-Age=0");
         if (secure) sb.append("; Secure");
+        if ("None".equalsIgnoreCase(sameSite)) sb.append("; Partitioned");
         response.addHeader("Set-Cookie", sb.toString());
     }
 }

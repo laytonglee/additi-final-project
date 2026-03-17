@@ -6,8 +6,12 @@ import { Client, IMessage, IFrame } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 import { useAuthStore } from "@/store/auth";
 
-const WS_URL =
-  (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080") + "/ws";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+const WS_URL = API_URL + "/ws";
+
+function buildNativeWsUrl(httpUrl: string): string {
+  return httpUrl.replace(/^http/, "ws") + "/ws";
+}
 
 export interface TypingUser {
   userId: number;
@@ -33,6 +37,7 @@ export function useTypingIndicator(contractId: number, enabled = true) {
     if (!enabled || !contractId || !user) return;
 
     const client = new Client({
+      brokerURL: buildNativeWsUrl(API_URL),
       webSocketFactory: () => new SockJS(WS_URL) as WebSocket,
       reconnectDelay: 5000,
       heartbeatIncoming: 10000,

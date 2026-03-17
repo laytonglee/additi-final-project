@@ -7,8 +7,12 @@ import { useAuthStore } from "@/store/auth";
 import { useNotificationStore } from "@/store/notifications";
 import { NotificationData } from "@/lib/api";
 
-const WS_URL =
-  (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080") + "/ws";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+const WS_URL = API_URL + "/ws";
+
+function buildNativeWsUrl(httpUrl: string): string {
+  return httpUrl.replace(/^http/, "ws") + "/ws";
+}
 
 /**
  * Global hook that maintains a single WebSocket connection for the
@@ -28,6 +32,7 @@ export function useNotificationSocket() {
     if (loading || !user) return;
 
     const client = new Client({
+      brokerURL: buildNativeWsUrl(API_URL),
       webSocketFactory: () => new SockJS(WS_URL) as WebSocket,
       reconnectDelay: 5000,
       heartbeatIncoming: 10000,

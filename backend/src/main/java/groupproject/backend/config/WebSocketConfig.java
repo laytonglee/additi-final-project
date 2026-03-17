@@ -48,13 +48,13 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
                 .addInterceptors(handshakeInterceptor)
-                .setAllowedOrigins("http://localhost:3000", "http://localhost:5173", frontendUrl)
+                .setAllowedOriginPatterns("http://localhost:*", frontendUrl)
                 .withSockJS();
 
         // Also register a raw WebSocket endpoint (no SockJS) for native clients
         registry.addEndpoint("/ws")
                 .addInterceptors(handshakeInterceptor)
-                .setAllowedOrigins("http://localhost:3000", "http://localhost:5173", frontendUrl);
+                .setAllowedOriginPatterns("http://localhost:*", frontendUrl);
     }
 
     @Override
