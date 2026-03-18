@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Khmerlance - Connect Clients & Freelancers",
+  title: "KhmerLance",
   description:
     "Post projects, submit proposals, manage contracts, and collaborate. The complete freelancer project board.",
 };
