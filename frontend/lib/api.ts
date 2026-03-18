@@ -283,7 +283,10 @@ export const authApi = {
   }) => api.post<ApiResponse<unknown>>("/api/auth/register", body),
 
   login: (body: { email: string; password: string }) =>
-    api.post<ApiResponse<{ user: MeData; roles: string[] }>>("/api/auth/login", body),
+    api.post<ApiResponse<{ user: MeData; roles: string[] }>>(
+      "/api/auth/login",
+      body,
+    ),
 
   me: () => api.get<ApiResponse<MeData>>("/api/auth/me"),
 
